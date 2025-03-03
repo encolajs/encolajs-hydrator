@@ -1,4 +1,6 @@
 import CastingManager from './CastingManager'
+import BaseModel from './BaseModel'
+import BaseCollection from './BaseCollection'
 export interface PropertySchema {
   type: string
   computed?: boolean
@@ -91,5 +93,49 @@ export default class ClassBuilder {
 
     mixin.call(this, Class, ...args)
     return Class
+  }
+
+  createModelClass(
+    props: Record<string, string | PropertySchema>,
+    methods: Record<string, Function> = {}
+  ): typeof BaseModel {
+    // Create a new class extending BaseModel
+    class CustomModel extends BaseModel {
+      constructor(data: Record<string, any> = {}) {
+        super(data)
+      }
+    }
+
+    this.addProps(CustomModel, props)
+
+    // Add methods to the class
+    Object.entries(methods).forEach(([name, method]) => {
+      ;(CustomModel.prototype as any)[name] = method
+    })
+
+    return CustomModel
+  }
+
+  createCollectionClass<T extends BaseModel>(
+    ModelClass: new (data?: Record<string, any>) => T
+  ): typeof BaseCollection {
+    const castingManager = this.castingManager
+
+    // Create item casting function
+    const castItem = (item: any): T => {
+      if (item instanceof ModelClass) {
+        return item
+      }
+      return new ModelClass(item)
+    }
+
+    // Create a custom collection class
+    class CustomCollection<T> extends BaseCollection<T> {
+      constructor(items: any[] = []) {
+        super(items, castItem as any)
+      }
+    }
+
+    return CustomCollection as unknown as typeof BaseCollection
   }
 }

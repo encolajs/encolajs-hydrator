@@ -1,17 +1,29 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ClassBuilder from '../src/ClassBuilder'
 import CastingManager from '../src/CastingManager'
 
 describe('ClassBuilder', () => {
   let castingManager: CastingManager
   let builder: ClassBuilder
+  let Person: any
+  let PersonCollection: any
 
   beforeEach(() => {
     castingManager = new CastingManager()
     builder = new ClassBuilder(castingManager)
+    Person = builder.createModelClass({
+      name: 'string',
+      age: 'number',
+    }, {
+      greet: function (this: any) {
+        return `Hello, my name is ${this.name}`
+      }
+    })
+    PersonCollection = builder.createCollectionClass(Person)
   })
 
   describe('addProps', () => {
-    test('should add properties to a class', () => {
+    it('adds properties to a class', () => {
       // Define a basic constructor
       function Person(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
@@ -50,7 +62,7 @@ describe('ClassBuilder', () => {
       expect(person.age).toBe(45)
     })
 
-    test('should add computed properties', () => {
+    it('adds computed properties', () => {
       function Person(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
           if (key in this) {
@@ -90,7 +102,7 @@ describe('ClassBuilder', () => {
       expect(person.lastName).toBe('Smith')
     })
 
-    test('should add property options (enumerable/configurable)', () => {
+    it('adds property options (enumerable/configurable)', () => {
       function TestClass(this: any) {}
 
       builder.addProps(TestClass, {
@@ -129,7 +141,7 @@ describe('ClassBuilder', () => {
       expect(hiddenDescriptor?.configurable).toBe(false)
     })
 
-    test('should add toJSON method for serialization', () => {
+    it('adds toJSON method for serialization', () => {
       function Event(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
           if (key in this) {
@@ -161,7 +173,7 @@ describe('ClassBuilder', () => {
   })
 
   describe('mixins', () => {
-    test('should define and apply mixins', () => {
+    it('defines and applies mixins', () => {
       // Define a class
       function Task(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
@@ -213,7 +225,7 @@ describe('ClassBuilder', () => {
       expect(task.updated_at instanceof Date).toBe(true)
     })
 
-    test('should throw error if mixin not found', () => {
+    it('throws error if mixin not found', () => {
       function TestClass(this: any) {}
 
       expect(() => {
@@ -221,7 +233,7 @@ describe('ClassBuilder', () => {
       }).toThrow("Mixin 'nonexistent' not found")
     })
 
-    test('should pass additional arguments to mixin', () => {
+    it('passes additional arguments to mixin', () => {
       function TestClass(this: any) {}
 
       // Define mixin that takes arguments
@@ -245,8 +257,46 @@ describe('ClassBuilder', () => {
     })
   })
 
+  describe('createModelClass', () => {
+    it('creates a model instance with properties', () => {
+        const model = new Person({
+            name: 'John Doe',
+            age: 42,
+        }) as typeof Person
+
+        expect(model.name).toBe('John Doe')
+        expect(model.age).toBe(42)
+        expect(model.greet()).toBe('Hello, my name is John Doe')
+    })
+
+    it('registers the model class with casting manager', () => {
+      castingManager.registerModel('Person', Person, PersonCollection)
+      const person = castingManager.cast({
+        name: 'Jane Doe',
+        age: '30'
+      }, 'Person') as typeof Person
+
+      expect(person).toBeInstanceOf(Person)
+      expect(person.name).toBe('Jane Doe')
+      expect(person.age).toBe(30)
+      expect(person.greet()).toBe('Hello, my name is Jane Doe')
+
+      const people = castingManager.cast([
+        {
+          name: 'Jane Doe',
+          age: '30'
+        }
+      ], 'Person_Collection') as typeof PersonCollection
+
+      expect(people).toBeInstanceOf(PersonCollection)
+      expect(people[0]).toBeInstanceOf(Person)
+      expect(people[0].name).toBe('Jane Doe')
+      expect(people[1]).toBe(undefined)
+    })
+  })
+
   describe('complex scenarios', () => {
-    test('should handle nested objects and type casting', () => {
+    it('handles nested objects and type casting', () => {
       // Define Address class
       function Address(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
@@ -320,7 +370,8 @@ describe('ClassBuilder', () => {
       expect(serialized.address.city).toBe('Anytown')
     })
 
-    test('should combine multiple mixins', () => {
+    it('combines multiple mixins', () => {
+      vi.useFakeTimers()
       // Base class
       function Model(this: any, data: any = {}) {
         Object.entries(data).forEach(([key, value]) => {
@@ -400,7 +451,7 @@ describe('ClassBuilder', () => {
       const prevUpdatedAt = model.updated_at
 
       // Wait a bit to ensure timestamp difference
-      jest.advanceTimersByTime(1000)
+      vi.advanceTimersByTime(1000)
 
       model.delete()
       expect(model.isDeleted()).toBe(true)

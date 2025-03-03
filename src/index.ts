@@ -1,5 +1,8 @@
 export { default as CastingManager } from './CastingManager'
 export { default as ClassBuilder } from './ClassBuilder'
-// Also re-export any named exports
+export { default as BaseModel } from './BaseModel'
+export { default as BaseCollection } from './BaseCollection'
 export * from './CastingManager'
 export * from './ClassBuilder'
+export * from './BaseModel'
+export * from './BaseCollection'

@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import CastingManager from '../src/CastingManager'
 
 describe('CastingManager', () => {
@@ -8,25 +9,25 @@ describe('CastingManager', () => {
   })
 
   describe('built-in casters', () => {
-    test('number caster should convert values to numbers', () => {
+    it('converts values to numbers', () => {
       expect(castingManager.cast('123', 'number')).toBe(123)
       expect(castingManager.cast('abc', 'number')).toBe(0)
       expect(castingManager.cast(456, 'number')).toBe(456)
     })
 
-    test('number caster should return null for falsy values', () => {
+    it('returns null for falsy values', () => {
       expect(castingManager.cast(null, 'number')).toBe(null)
       expect(castingManager.cast(undefined, 'number')).toBe(null)
     })
 
-    test('decimal caster should convert values to decimal numbers with precision', () => {
+    it('converts values to decimal numbers with precision', () => {
       expect(castingManager.cast('123.456', 'decimal')).toBe(123.46)
       expect(castingManager.cast('123.456', 'decimal:3')).toBe(123.456)
       expect(castingManager.cast('123.4567', 'decimal:2')).toBe(123.46)
       expect(castingManager.cast(123.456, 'decimal:1')).toBe(123.5)
     })
 
-    test('string caster should convert values to strings', () => {
+    it('converts values to strings', () => {
       expect(castingManager.cast(123, 'string')).toBe('123')
       expect(castingManager.cast(null, 'string')).toBe('null')
       expect(castingManager.cast(undefined, 'string')).toBe('undefined')
@@ -34,7 +35,7 @@ describe('CastingManager', () => {
       expect(castingManager.cast([1, 2, 3], 'string')).toBe('1,2,3')
     })
 
-    test('date caster should convert values to Date objects', () => {
+    it('converts values to Date objects', () => {
       const date = castingManager.cast('2023-01-15', 'date')
       expect(date instanceof Date).toBe(true)
       expect(date.getFullYear()).toBe(2023)
@@ -45,7 +46,7 @@ describe('CastingManager', () => {
       expect(castingManager.cast(existingDate, 'date')).toBe(existingDate)
     })
 
-    test('datetime caster should convert values to Date objects with time', () => {
+    it('converts values to Date objects with time', () => {
       const datetime = castingManager.cast(
         '2023-01-15T14:30:45.000Z',
         'datetime'
@@ -59,7 +60,7 @@ describe('CastingManager', () => {
       expect(datetime.getUTCSeconds()).toBe(45)
     })
 
-    test('array caster should convert values to arrays', () => {
+    it('converts values to arrays', () => {
       expect(castingManager.cast('test', 'array')).toEqual(['test'])
       expect(castingManager.cast([1, 2, 3], 'array')).toEqual([1, 2, 3])
 
@@ -70,25 +71,25 @@ describe('CastingManager', () => {
   })
 
   describe('serialize', () => {
-    test('date serializer should format dates as YYYY-MM-DD', () => {
+    it('formats dates as YYYY-MM-DD', () => {
       const date = new Date('2023-05-15T12:00:00Z')
       expect(castingManager.serialize(date, 'date')).toBe('2023-05-15')
     })
 
-    test('datetime serializer should format dates as ISO strings', () => {
+    it('formats dates as ISO strings', () => {
       const date = new Date('2023-05-15T12:00:00Z')
       const serialized = castingManager.serialize(date, 'datetime')
       expect(serialized).toBe(date.toISOString())
     })
 
-    test('array serializer should serialize array elements', () => {
+    it('serializes array elements', () => {
       const dates = [new Date('2023-01-15'), new Date('2023-02-20')]
 
       const serialized = castingManager.serialize(dates, 'array:date')
       expect(serialized).toEqual(['2023-01-15', '2023-02-20'])
     })
 
-    test('should use toJSON method of custom objects when available', () => {
+    it('uses toJSON method of custom objects when available', () => {
       const customObj = {
         name: 'Test',
         toJSON: () => ({ serialized: true, name: 'Test' }),
@@ -102,7 +103,7 @@ describe('CastingManager', () => {
   })
 
   describe('custom types', () => {
-    test('should allow registering and using custom types', () => {
+    it('allows registering and using custom types', () => {
       // Register a boolean type
       castingManager.register(
         'boolean',
@@ -126,7 +127,7 @@ describe('CastingManager', () => {
       expect(castingManager.cast(0, 'boolean')).toBe(false)
     })
 
-    test('should handle custom types that reference other types', () => {
+    it('handles custom types that reference other types', () => {
       // Register a Person type
       castingManager.register(
         'person',
@@ -169,8 +170,8 @@ describe('CastingManager', () => {
   })
 
   describe('error handling', () => {
-    test('should handle non-existent types gracefully', () => {
-      console.error = jest.fn()
+    it('handles non-existent types gracefully', () => {
+      console.error = vi.fn()
 
       const value = { test: true }
       const result = castingManager.cast(value, 'nonexistent')
@@ -181,8 +182,8 @@ describe('CastingManager', () => {
       )
     })
 
-    test('should handle casting errors gracefully', () => {
-      console.error = jest.fn()
+    it('handles casting errors gracefully', () => {
+      console.error = vi.fn()
 
       // Register a type that throws an error
       castingManager.register('problematic', function () {

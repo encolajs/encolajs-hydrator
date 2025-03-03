@@ -1,3 +1,6 @@
+import BaseModel from './BaseModel'
+import BaseCollection from './BaseCollection'
+
 type CastFunction = (this: CastingManager, value: any, params?: string[]) => any
 type SerializeFunction = (
   this: CastingManager,
@@ -129,6 +132,41 @@ export default class CastingManager {
     if (serializeFn) {
       this.serializers.set(type, serializeFn)
     }
+  }
+
+  registerModel(
+    type: string,
+    ModelClass: typeof BaseModel,
+    CollectionClass?: typeof BaseCollection
+  ): this {
+    let castFn = function (value: any) {
+      if (value === null || value === undefined) {
+        return null
+      }
+
+      if (value instanceof ModelClass) {
+        return value
+      }
+
+      return new ModelClass(value)
+    }
+    this.register(type, castFn)
+
+    if (CollectionClass) {
+      this.register(`${type}_collection`, function (value) {
+        if (value === null || value === undefined) {
+          return new CollectionClass([], castFn)
+        }
+
+        if (value instanceof CollectionClass) {
+          return value
+        }
+
+        return new CollectionClass(value, castFn)
+      })
+    }
+
+    return this
   }
 
   cast(value: any, typeSpec: string): any {
