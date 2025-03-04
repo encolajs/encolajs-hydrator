@@ -152,19 +152,21 @@ export default class CastingManager {
     }
     this.register(type, castFn)
 
-    if (CollectionClass) {
-      this.register(`${type}Collection`, function (value) {
-        if (value === null || value === undefined) {
-          return new CollectionClass([], castFn)
-        }
-
-        if (value instanceof CollectionClass) {
-          return value
-        }
-
-        return new CollectionClass(value, castFn)
-      })
+    if (!CollectionClass) {
+      CollectionClass = BaseCollection
     }
+
+    this.register(`${type}Collection`, function (value) {
+      if (value === null || value === undefined) {
+        return new CollectionClass([], castFn)
+      }
+
+      if (value instanceof CollectionClass) {
+        return value
+      }
+
+      return new CollectionClass(value, castFn)
+    })
 
     return this
   }
