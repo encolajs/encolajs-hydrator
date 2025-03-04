@@ -1,6 +1,9 @@
 import CastingManager from './CastingManager'
 import BaseModel from './BaseModel'
 import BaseCollection from './BaseCollection'
+import timestamps from './mixins/timestamps'
+import softDelete from './mixins/softDelete'
+import methods from './mixins/methods'
 export interface PropertySchema {
   type: string
   computed?: boolean
@@ -18,18 +21,31 @@ function normalizePropertySchema(
 export default class ClassBuilder {
   private readonly castingManager: CastingManager
   private mixins: Map<string, any>
+  private currentClass: any = null
   constructor(castingManager: CastingManager) {
     this.castingManager = castingManager
     this.mixins = new Map()
+    this.registerBuiltInMixins()
   }
 
-  addProps(Class: any, props: Record<string, string | PropertySchema>): any {
+  withClass(Class: any): this {
+    this.currentClass = Class
+    return this
+  }
+
+  private applyPropsToClass(
+    Class: any,
+    props: Record<string, string | PropertySchema>
+  ): any {
     const castingManager = this.castingManager
 
-    Class.prototype._data = {}
+    Class.prototype._data = Class.prototype._data || {}
+
+    Class.prototype._propertyTypes = Class.prototype._propertyTypes || {}
 
     Object.entries(props).forEach(([prop, typeSpec]) => {
       const spec = normalizePropertySchema(typeSpec)
+      Class.prototype._propertyTypes[prop] = spec.type
       // Use arrow functions to avoid 'this' issues
       const getter =
         spec.get ||
@@ -51,52 +67,77 @@ export default class ClassBuilder {
       })
     })
 
-    if (!Class.prototype.toJSON) {
-      Class.prototype.toJSON = function () {
-        const result: Record<string, any> = {}
+    Class.prototype.toJSON = function () {
+      const result: Record<string, any> = {}
+      const propertyTypes = this._propertyTypes || {}
 
-        // Get all property names from own properties and prototype
-        const propNames = new Set([
-          ...Object.keys(this._data || {}),
-          ...Object.getOwnPropertyNames(Class.prototype).filter(
-            (prop) => prop !== 'constructor' && prop !== 'toJSON'
-          ),
-        ])
+      // Get all property names from own properties and prototype
+      const propNames = new Set([
+        ...Object.keys(this._data || {}),
+        ...Object.getOwnPropertyNames(this).filter(
+          (prop) =>
+            prop !== 'constructor' &&
+            prop !== 'toJSON' &&
+            prop !== 'clone' &&
+            !prop.startsWith('_')
+        ),
+      ])
 
-        // Add each property to result
-        propNames.forEach((prop) => {
-          const propType = props[prop]
-            ? normalizePropertySchema(props[prop]).type
-            : null
-          result[prop] = propType
-            ? castingManager.serialize(this[prop], propType)
-            : this[prop]
-        })
+      // Add each property to result
+      propNames.forEach((prop) => {
+        if (typeof (this as any)[prop] === 'function' || prop.startsWith('_')) {
+          return
+        }
 
-        return result
-      }
+        const propType = propertyTypes[prop]
+        result[prop] = propType
+          ? castingManager.serialize(this[prop], propType)
+          : this[prop]
+      })
+
+      return result
     }
 
     return Class
   }
 
-  mixin(name: any, fn: Function): any {
+  registerMixin(name: any, fn: Function): this {
     this.mixins.set(name, fn)
     return this
   }
 
-  apply(Class: any, mixinName: string, ...args: any[]): any {
-    const mixin = this.mixins.get(mixinName)
-    if (!mixin) {
-      throw new Error(`Mixin '${mixinName}' not found`)
+  add(mixinName: string, options?: any): this {
+    if (!this.currentClass) {
+      throw new Error('You must call withClass() before adding mixins')
     }
 
-    mixin.call(this, Class, ...args)
-    return Class
+    if (mixinName === 'props' && options) {
+      this.applyPropsToClass(this.currentClass, options)
+    } else {
+      const mixin = this.mixins.get(mixinName)
+      if (!mixin) {
+        throw new Error(`Mixin '${mixinName}' not found`)
+      }
+
+      mixin.call(this, this.currentClass, options)
+    }
+
+    return this
   }
 
-  createModelClass(
+  build(): any {
+    if (!this.currentClass) {
+      throw new Error('You must call withClass() before building')
+    }
+
+    const resultClass = this.currentClass
+    this.currentClass = null
+    return resultClass
+  }
+
+  newModelClass(
     props: Record<string, string | PropertySchema>,
+    mixins: Record<string, any> = {},
     methods: Record<string, Function> = {}
   ): typeof BaseModel {
     // Create a new class extending BaseModel
@@ -106,18 +147,19 @@ export default class ClassBuilder {
       }
     }
 
-    this.addProps(CustomModel, props)
+    this.withClass(CustomModel).add('props', props).add('methods', methods)
 
-    // Add methods to the class
-    Object.entries(methods).forEach(([name, method]) => {
-      ;(CustomModel.prototype as any)[name] = method
+    Object.entries(mixins).forEach(([name, options]) => {
+      this.add(name, options)
     })
 
-    return CustomModel
+    return this.build()
   }
 
-  createCollectionClass<T extends BaseModel>(
-    ModelClass: new (data?: Record<string, any>) => T
+  newCollectionClass<T extends BaseModel>(
+    ModelClass: new (data?: Record<string, any>) => T,
+    mixins: Record<string, any> = {},
+    methods: Record<string, Function> = {}
   ): typeof BaseCollection {
     const castingManager = this.castingManager
 
@@ -136,6 +178,18 @@ export default class ClassBuilder {
       }
     }
 
-    return CustomCollection as unknown as typeof BaseCollection
+    this.withClass(CustomCollection).add('methods', methods)
+
+    Object.entries(mixins).forEach(([name, options]) => {
+      this.add(name, options)
+    })
+
+    return this.build() as unknown as typeof BaseCollection
+  }
+
+  private registerBuiltInMixins() {
+    this.registerMixin('methods', methods)
+    this.registerMixin('timestamps', timestamps)
+    this.registerMixin('softDelete', softDelete)
   }
 }

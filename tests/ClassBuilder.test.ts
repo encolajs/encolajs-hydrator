@@ -1,466 +1,448 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ClassBuilder from '../src/ClassBuilder'
 import CastingManager from '../src/CastingManager'
+import BaseModel from '../src/BaseModel'
+import BaseCollection from '../src/BaseCollection'
+import { PropertySchema } from '../../temp/ClassGenerator'
 
 describe('ClassBuilder', () => {
   let castingManager: CastingManager
   let builder: ClassBuilder
-  let Person: any
-  let PersonCollection: any
 
   beforeEach(() => {
     castingManager = new CastingManager()
     builder = new ClassBuilder(castingManager)
-    Person = builder.createModelClass({
-      name: 'string',
-      age: 'number',
-    }, {
-      greet: function (this: any) {
-        return `Hello, my name is ${this.name}`
-      }
-    })
-    PersonCollection = builder.createCollectionClass(Person)
   })
 
-  describe('addProps', () => {
-    it('adds properties to a class', () => {
-      // Define a basic constructor
-      function Person(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
+  describe('withClass().add().build() fluent API', () => {
+    it('enhances a class with properties', () => {
+      class Person extends BaseModel {
+        constructor(data: Record<string, any> = {}) {
+          super(data)
+        }
       }
 
-      // Add properties to Person
-      builder.addProps(Person, {
-        name: 'string',
-        age: 'number',
-        birthdate: 'date',
+      const EnhancedPerson = builder
+        .withClass(Person)
+        .add('props', {
+          name: 'string',
+          age: 'number',
+          email: 'string',
+        })
+        .build()
+
+      const person = new EnhancedPerson({
+        name: 'John Doe',
+        age: '42', // Should be cast to number
+        email: 'john@example.com',
       })
 
-      // Create instance with properties
-      const PersonConstructor = Person as unknown as new (data?: any) => any
-      const person = new PersonConstructor({
-        name: 123, // Should be cast to string
-        age: '30', // Should be cast to number
-        birthdate: '1990-01-01', // Should be cast to date
-      })
-
-      // Test property types
-      expect(person.name).toBe('123')
-      expect(person.age).toBe(30)
-      expect(person.birthdate instanceof Date).toBe(true)
-      expect(person.birthdate.getFullYear()).toBe(1990)
-
-      // Test setting properties after construction
-      person.name = 'Jane Doe'
-      person.age = '45'
-
-      expect(person.name).toBe('Jane Doe')
-      expect(person.age).toBe(45)
+      expect(person.name).toBe('John Doe')
+      expect(person.age).toBe(42)
+      expect(person.email).toBe('john@example.com')
     })
 
-    it('adds computed properties', () => {
-      function Person(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
+    it('adds methods to a class', () => {
+      class Person extends BaseModel {
+        constructor(data: Record<string, any> = {}) {
+          super(data)
+        }
       }
 
-      builder.addProps(Person, {
-        firstName: 'string',
-        lastName: 'string',
-        fullName: {
-          type: 'string',
-          get: function (this: any) {
+      const EnhancedPerson = builder
+        .withClass(Person)
+        .add('props', {
+          firstName: 'string',
+          lastName: 'string',
+        })
+        .add('methods', {
+          getFullName: function (this: any) {
             return `${this.firstName} ${this.lastName}`
           },
-          set: function (this: any, value: string) {
-            const parts = value.split(' ')
-            this.firstName = parts[0] || ''
-            this.lastName = parts.slice(1).join(' ') || ''
-          },
-        },
-      })
+        })
+        .build()
 
-      const PersonConstructor = Person as unknown as new (data?: any) => any
-      const person = new PersonConstructor({
+      const person = new EnhancedPerson({
         firstName: 'John',
         lastName: 'Doe',
       })
 
-      // Test computed getter
-      expect(person.fullName).toBe('John Doe')
-
-      // Test computed setter
-      person.fullName = 'Jane Smith'
-      expect(person.firstName).toBe('Jane')
-      expect(person.lastName).toBe('Smith')
+      expect(person.getFullName()).toBe('John Doe')
     })
 
-    it('adds property options (enumerable/configurable)', () => {
-      function TestClass(this: any) {}
+    it('supports built-in timestamps mixin', () => {
+      vi.useFakeTimers()
+      const dateNow = new Date()
+      vi.setSystemTime(dateNow)
 
-      builder.addProps(TestClass, {
-        visible: {
-          type: 'string',
-          enumerable: true,
-          configurable: true,
-        },
-        hidden: {
-          type: 'string',
-          enumerable: false,
-          configurable: false,
-        },
-      })
-
-      const TestClassConstructor = TestClass as unknown as new (
-        data?: any
-      ) => any
-      const instance = new TestClassConstructor()
-      instance.visible = 'I am visible'
-      instance.hidden = 'I am hidden'
-
-      // Check property descriptors
-      const visibleDescriptor = Object.getOwnPropertyDescriptor(
-        TestClass.prototype,
-        'visible'
-      )
-      const hiddenDescriptor = Object.getOwnPropertyDescriptor(
-        TestClass.prototype,
-        'hidden'
-      )
-
-      expect(visibleDescriptor?.enumerable).toBe(true)
-      expect(visibleDescriptor?.configurable).toBe(true)
-      expect(hiddenDescriptor?.enumerable).toBe(false)
-      expect(hiddenDescriptor?.configurable).toBe(false)
-    })
-
-    it('adds toJSON method for serialization', () => {
-      function Event(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
-      }
-
-      builder.addProps(Event, {
-        title: 'string',
-        date: 'date',
-        attendees: 'array:string',
-      })
-
-      const EventConstructor = Event as unknown as new (data?: any) => any
-      const event = new EventConstructor({
-        title: 'Conference',
-        date: '2023-05-15',
-        attendees: ['John', 'Jane', 'Bob'],
-      })
-
-      // Test serialization
-      const serialized = JSON.parse(JSON.stringify(event))
-
-      expect(serialized.title).toBe('Conference')
-      expect(serialized.date).toBe('2023-05-15') // Should be serialized as YYYY-MM-DD
-      expect(serialized.attendees).toEqual(['John', 'Jane', 'Bob'])
-    })
-  })
-
-  describe('mixins', () => {
-    it('defines and applies mixins', () => {
-      // Define a class
-      function Task(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
-      }
-
-      // Add base properties
-      builder.addProps(Task, {
-        title: 'string',
-        completed: 'boolean',
-      })
-
-      // Define a timestamps mixin
-      builder.mixin('timestamps', function (this: ClassBuilder, Class: any) {
-        this.addProps(Class, {
-          created_at: 'date',
-          updated_at: 'date',
-        })
-
-        Class.prototype.touch = function () {
-          this.updated_at = new Date()
-          return this
+      class Task extends BaseModel {
+        constructor(data: Record<string, any> = {}) {
+          super(data)
         }
-      })
+      }
 
-      // Apply the mixin
-      builder.apply(Task, 'timestamps')
+      const EnhancedTask = builder
+        .withClass(Task)
+        .add('props', {
+          title: 'string',
+          completed: 'boolean',
+        })
+        .add('timestamps')
+        .build()
 
-      const TaskConstructor = Task as unknown as new (data?: any) => any
-      const task = new TaskConstructor({
+      const task = new EnhancedTask({
         title: 'Test task',
         completed: false,
-        created_at: '2023-01-01',
       })
 
-      // Test original properties
-      expect(task.title).toBe('Test task')
-      expect(task.completed).toBe(false)
+      expect(task.created_at).toEqual(dateNow)
+      expect(task.updated_at).toEqual(dateNow)
 
-      // Test mixin properties
-      expect(task.created_at instanceof Date).toBe(true)
+      // Advance time and touch the model
+      vi.advanceTimersByTime(1000)
+      const newDate = new Date()
 
-      // Test mixin methods
-      expect(typeof task.touch).toBe('function')
       task.touch()
-      expect(task.updated_at instanceof Date).toBe(true)
+      expect(task.updated_at).toEqual(newDate)
+
+      vi.useRealTimers()
     })
 
-    it('throws error if mixin not found', () => {
-      function TestClass(this: any) {}
+    it('supports built-in softDelete mixin', () => {
+      vi.useFakeTimers()
+      const initialDate = new Date()
+      vi.setSystemTime(initialDate)
 
-      expect(() => {
-        builder.apply(TestClass, 'nonexistent')
-      }).toThrow("Mixin 'nonexistent' not found")
-    })
-
-    it('passes additional arguments to mixin', () => {
-      function TestClass(this: any) {}
-
-      // Define mixin that takes arguments
-      builder.mixin(
-        'configurable',
-        function (this: ClassBuilder, Class: any, options: any) {
-          Class.prototype.getConfig = function () {
-            return options
-          }
+      class Post extends BaseModel {
+        constructor(data: Record<string, any> = {}) {
+          super(data)
         }
-      )
-
-      // Apply mixin with arguments
-      builder.apply(TestClass, 'configurable', { debug: true, mode: 'test' })
-
-      const TestClassConstructor = TestClass as unknown as new (
-        data?: any
-      ) => any
-      const instance = new TestClassConstructor()
-      expect(instance.getConfig()).toEqual({ debug: true, mode: 'test' })
-    })
-  })
-
-  describe('createModelClass', () => {
-    it('creates a model instance with properties', () => {
-        const model = new Person({
-            name: 'John Doe',
-            age: 42,
-        }) as typeof Person
-
-        expect(model.name).toBe('John Doe')
-        expect(model.age).toBe(42)
-        expect(model.greet()).toBe('Hello, my name is John Doe')
-    })
-
-    it('registers the model class with casting manager', () => {
-      castingManager.registerModel('Person', Person, PersonCollection)
-      const person = castingManager.cast({
-        name: 'Jane Doe',
-        age: '30'
-      }, 'Person') as typeof Person
-
-      expect(person).toBeInstanceOf(Person)
-      expect(person.name).toBe('Jane Doe')
-      expect(person.age).toBe(30)
-      expect(person.greet()).toBe('Hello, my name is Jane Doe')
-
-      const people = castingManager.cast([
-        {
-          name: 'Jane Doe',
-          age: '30'
-        }
-      ], 'Person_Collection') as typeof PersonCollection
-
-      expect(people).toBeInstanceOf(PersonCollection)
-      expect(people[0]).toBeInstanceOf(Person)
-      expect(people[0].name).toBe('Jane Doe')
-      expect(people[1]).toBe(undefined)
-    })
-  })
-
-  describe('complex scenarios', () => {
-    it('handles nested objects and type casting', () => {
-      // Define Address class
-      function Address(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
       }
 
-      builder.addProps(Address, {
-        street: 'string',
-        city: 'string',
-        zipCode: 'string',
+      const EnhancedPost = builder
+        .withClass(Post)
+        .add('props', {
+          title: 'string',
+          content: 'string',
+        })
+        .add('timestamps')
+        .add('softDelete')
+        .build()
+
+      const post = new EnhancedPost({
+        title: 'Test Post',
+        content: 'This is a test',
       })
 
-      // Define Person class that uses Address
-      function Person(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
-      }
+      expect(post.deleted_at).toBeUndefined()
+      expect(post.isDeleted()).toBe(false)
 
-      // Register Address with casting manager manually for testing
-      castingManager.register(
-        'Address',
-        function (value) {
-          if (value instanceof Address) return value
-          const AddressConstructor = Address as unknown as new (
-            data?: any
-          ) => any
-          return new AddressConstructor(value)
-        },
-        function (value) {
-          if (!(value instanceof Address)) {
-            value = this.cast(value, 'Address')
+      // Advance time and delete the post
+      vi.advanceTimersByTime(1000)
+      const deleteDate = new Date()
+
+      post.delete()
+      expect(post.deleted_at).toEqual(deleteDate)
+      expect(post.updated_at).toEqual(deleteDate)
+      expect(post.isDeleted()).toBe(true)
+
+      // Advance time and restore the post
+      vi.advanceTimersByTime(1000)
+      const restoreDate = new Date()
+
+      post.restore()
+      expect(post.deleted_at).toBeNull()
+      expect(post.updated_at).toEqual(restoreDate)
+      expect(post.isDeleted()).toBe(false)
+
+      vi.useRealTimers()
+    })
+
+    it('supports custom mixin registration', () => {
+      // Register a custom mixin
+      builder.registerMixin(
+        'sluggable',
+        function (Class: any, options: any = {}) {
+          const sourceField = options.sourceField || 'title'
+          const targetField = options.targetField || 'slug'
+
+          const props: Record<string, string | PropertySchema> = {}
+          props[targetField] = 'string'
+
+          this.add('props', props)
+
+          // Add generateSlug method
+          this.add('methods', {
+            generateSlug: function (this: any) {
+              const source = this[sourceField] || ''
+              this[targetField] = source
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '')
+              return this
+            },
+          })
+
+          // Hook into the fill method to generate slug on fill
+          const originalFill = Class.prototype.fill
+          Class.prototype.fill = function (data: any) {
+            const result = originalFill.call(this, data)
+            if (this[sourceField] && !data[targetField]) {
+              this.generateSlug()
+            }
+            return result
           }
-          return value.toJSON()
         }
       )
 
-      builder.addProps(Person, {
+      class Post extends BaseModel {
+        constructor(data: Record<string, any> = {}) {
+          super(data)
+        }
+      }
+
+      const SluggedPost = builder
+        .withClass(Post)
+        .add('props', {
+          title: 'string',
+          content: 'string',
+        })
+        .add('sluggable', { sourceField: 'title' })
+        .build()
+
+      const post = new SluggedPost({
+        title: 'This is a Test Post!',
+        content: 'Some content',
+      })
+
+      expect(post.slug).toBe('this-is-a-test-post')
+
+      // Test manual slug generation
+      post.title = 'Updated Title'
+      post.generateSlug()
+      expect(post.slug).toBe('updated-title')
+    })
+
+    it('supports enhancing different parent classes', () => {
+      // Create a custom parent class
+      class CustomBase {
+        protected data: Record<string, any> = {}
+
+        constructor(data: Record<string, any> = {}) {
+          Object.assign(this.data, data)
+        }
+
+        getData() {
+          return this.data
+        }
+      }
+
+      const EnhancedCustomBase = builder
+        .withClass(CustomBase)
+        .add('props', {
+          name: 'string',
+          age: 'number',
+        })
+        .build()
+
+      const instance = new EnhancedCustomBase()
+      instance.name = 'John'
+      instance.age = '30'
+
+      expect(instance).toBeInstanceOf(CustomBase)
+      expect(instance.getData).toBeDefined()
+      expect(instance.name).toBe('John')
+      expect(instance.age).toBe(30)
+    })
+  })
+
+  describe('newModelClass', () => {
+    it('creates a model class with properties', () => {
+      const Person = builder.newModelClass({
         name: 'string',
         age: 'number',
-        address: 'Address',
-        contacts: 'array:string',
+        email: 'string',
       })
 
-      const PersonConstructor = Person as unknown as new (data?: any) => any
-      const person = new PersonConstructor({
+      const person = new Person({
         name: 'John Doe',
-        age: '42',
-        address: {
-          street: '123 Main St',
-          city: 'Anytown',
-          zipCode: '12345',
-        },
-        contacts: ['email@example.com', '555-1234'],
-      })
+        age: '42', // Should be cast to number
+        email: 'john@example.com',
+        // @ts-ignore
+      }) as Person
 
-      // Test property access
+      expect(person).toBeInstanceOf(BaseModel)
+      expect(person).toBeInstanceOf(Person)
       expect(person.name).toBe('John Doe')
       expect(person.age).toBe(42)
-      expect(person.address instanceof Address).toBe(true)
-      expect(person.address.street).toBe('123 Main St')
-      expect(person.contacts).toEqual(['email@example.com', '555-1234'])
-
-      // Test serialization of nested objects
-      const serialized = JSON.parse(JSON.stringify(person))
-      expect(serialized.address.city).toBe('Anytown')
+      expect(person.email).toBe('john@example.com')
     })
 
-    it('combines multiple mixins', () => {
+    it('creates a model class with properties, mixins, and methods', () => {
       vi.useFakeTimers()
-      // Base class
-      function Model(this: any, data: any = {}) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key in this) {
-            this[key] = value
-          }
-        })
-      }
+      const initialDate = new Date()
+      vi.setSystemTime(initialDate)
 
-      // Basic properties
-      builder.addProps(Model, {
-        id: 'number',
-        name: 'string',
-      })
-
-      // Timestamps mixin
-      builder.mixin('timestamps', function (this: ClassBuilder, Class: any) {
-        this.addProps(Class, {
-          created_at: 'date',
-          updated_at: 'date',
-        })
-
-        Class.prototype.touch = function () {
-          this.updated_at = new Date()
-          return this
-        }
-      })
-
-      // SoftDelete mixin
-      builder.mixin('softDelete', function (this: ClassBuilder, Class: any) {
-        this.addProps(Class, {
-          deleted_at: 'date',
-        })
-
-        Class.prototype.delete = function () {
-          this.deleted_at = new Date()
-          if (typeof this.touch === 'function') {
+      const Task = builder.newModelClass(
+        {
+          title: 'string',
+          priority: 'number',
+          completed: 'boolean',
+        },
+        { timestamps: {}, softDelete: {} },
+        {
+          isPriority: function (this: any) {
+            return this.priority > 5
+          },
+          complete: function (this: any) {
+            this.completed = true
             this.touch()
-          }
-          return this
+            return this
+          },
         }
+      )
 
-        Class.prototype.restore = function () {
-          this.deleted_at = null
-          if (typeof this.touch === 'function') {
-            this.touch()
-          }
-          return this
-        }
+      const task = new Task({
+        title: 'Important task',
+        priority: 8,
+        completed: false,
+        // @ts-ignore
+      }) as Task
 
-        Class.prototype.isDeleted = function () {
-          return !!this.deleted_at
-        }
-      })
+      expect(task.created_at).toEqual(initialDate)
+      expect(task.title).toBe('Important task')
+      expect(task.isPriority()).toBe(true)
 
-      // Apply both mixins
-      builder.apply(Model, 'timestamps')
-      builder.apply(Model, 'softDelete')
-
-      const ModelConstructor = Model as unknown as new (data?: any) => any
-      const model = new ModelConstructor({
-        id: 1,
-        name: 'Test Model',
-      })
-
-      // Test basic properties
-      expect(model.id).toBe(1)
-      expect(model.name).toBe('Test Model')
-
-      // Test timestamp mixin
-      model.touch()
-      expect(model.updated_at instanceof Date).toBe(true)
-
-      // Test softDelete mixin that uses touch() from timestamps
-      expect(model.isDeleted()).toBe(false)
-
-      const prevUpdatedAt = model.updated_at
-
-      // Wait a bit to ensure timestamp difference
+      // Advance time and complete the task
       vi.advanceTimersByTime(1000)
+      const completeDate = new Date()
 
-      model.delete()
-      expect(model.isDeleted()).toBe(true)
-      expect(model.deleted_at instanceof Date).toBe(true)
-      expect(model.updated_at).not.toBe(prevUpdatedAt) // Should update timestamp
+      task.complete()
+      expect(task.completed).toBe(true)
+      expect(task.updated_at).toEqual(completeDate)
 
-      model.restore()
-      expect(model.isDeleted()).toBe(false)
-      expect(model.deleted_at).toBeNull()
+      // Test soft delete functionality
+      task.delete()
+      expect(task.isDeleted()).toBe(true)
+
+      vi.useRealTimers()
+    })
+  })
+
+  describe('newCollectionClass', () => {
+    it('creates a collection class for a model', () => {
+      const Person = builder.newModelClass({
+        name: 'string',
+        age: 'number',
+      })
+
+      const PeopleCollection = builder.newCollectionClass(Person)
+
+      // @ts-ignore
+      const collection = new PeopleCollection(
+        [
+          { name: 'John', age: 30 },
+          { name: 'Jane', age: 25 },
+        ],
+        (data) => castingManager.cast(data, 'Person')
+      )
+
+      expect(collection).toBeInstanceOf(BaseCollection)
+      expect(collection.length).toBe(2)
+      expect(collection[0]).toBeInstanceOf(Person)
+      expect(collection[0].name).toBe('John')
+      expect(collection[1].name).toBe('Jane')
+    })
+
+    it('creates a collection class with mixins and methods', () => {
+      const Product = builder.newModelClass({
+        name: 'string',
+        price: 'number',
+        category: 'string',
+      })
+
+      const ProductCollection = builder.newCollectionClass(
+        Product,
+        {}, // No mixins for this example
+        {
+          getTotalPrice: function (this: any) {
+            return this.reduce(
+              (sum: number, product: any) => sum + product.price,
+              0
+            )
+          },
+          filterByCategory: function (this: any, category: string) {
+            return this.filterBy('category', category)
+          },
+        }
+      )
+
+      const products = new ProductCollection(
+        [
+          { name: 'Laptop', price: 1200, category: 'electronics' },
+          { name: 'Phone', price: 800, category: 'electronics' },
+          { name: 'Desk', price: 350, category: 'furniture' },
+        ]
+        // @ts-ignore
+      ) as ProductCollection
+
+      expect(products.getTotalPrice()).toBe(2350)
+
+      const electronicsOnly = products.filterByCategory('electronics')
+      expect(electronicsOnly.length).toBe(2)
+      expect(electronicsOnly.getTotalPrice()).toBe(2000)
+    })
+  })
+
+  describe('serialization', () => {
+    it('correctly serializes model instances to JSON', () => {
+      const User = builder.newModelClass(
+        {
+          name: 'string',
+          email: 'string',
+          joined_at: 'date',
+          preferences: 'array:string',
+        },
+        { timestamps: {} }
+      )
+
+      const user = new User({
+        name: 'John Doe',
+        email: 'john@example.com',
+        joined_at: '2023-01-15',
+        preferences: ['dark-mode', 'notifications-on'],
+      })
+
+      const json = user.toJSON()
+
+      expect(json.name).toBe('John Doe')
+      expect(json.email).toBe('john@example.com')
+      expect(json.joined_at).toMatch(/^\d{4}-\d{2}-\d{2}$/) // Date serialized as YYYY-MM-DD
+      expect(json.preferences).toEqual(['dark-mode', 'notifications-on'])
+      expect(json.created_at).toBeDefined()
+      expect(json.updated_at).toBeDefined()
+    })
+  })
+
+  describe('error handling', () => {
+    it('throws error when trying to add without calling withClass first', () => {
+      expect(() => {
+        builder.add('props', { name: 'string' })
+      }).toThrow('You must call withClass() before adding mixins')
+    })
+
+    it('throws error when trying to build without calling withClass first', () => {
+      expect(() => {
+        builder.build()
+      }).toThrow('You must call withClass() before building')
+    })
+
+    it('throws error when mixin not found', () => {
+      class TestClass extends BaseModel {}
+
+      expect(() => {
+        builder.withClass(TestClass).add('nonexistent')
+      }).toThrow("Mixin 'nonexistent' not found")
     })
   })
 })

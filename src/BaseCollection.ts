@@ -1,9 +1,9 @@
 export type ItemCastingFunction<T> = (item: any) => T
 
 export default class BaseCollection<T = any> extends Array<T> {
-  protected _castingFn: ItemCastingFunction<T>
+  protected _castingFn: ItemCastingFunction<T> | undefined
 
-  constructor(items: any[] = [], castingFn: ItemCastingFunction<T>) {
+  constructor(items: any[] = [], castingFn?: ItemCastingFunction<T>) {
     super()
 
     this._castingFn = castingFn
@@ -15,7 +15,7 @@ export default class BaseCollection<T = any> extends Array<T> {
   }
 
   protected _castItem(item: any): T {
-    return this._castingFn(item)
+    return this._castingFn ? this._castingFn(item) : item
   }
 
   push(...items: any[]): number {
@@ -124,9 +124,8 @@ export default class BaseCollection<T = any> extends Array<T> {
 
   map<U>(callback: (item: T, index: number, array: T[]) => U): U[] {
     // @ts-ignore
-    return Array.prototype.map.call([...this], callback);
+    return Array.prototype.map.call([...this], callback)
   }
-
 
   toJSON(): any[] {
     return Array.prototype.map.call([...this], (item: any) => {

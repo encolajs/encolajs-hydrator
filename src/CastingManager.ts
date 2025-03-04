@@ -153,7 +153,7 @@ export default class CastingManager {
     this.register(type, castFn)
 
     if (CollectionClass) {
-      this.register(`${type}_collection`, function (value) {
+      this.register(`${type}Collection`, function (value) {
         if (value === null || value === undefined) {
           return new CollectionClass([], castFn)
         }
