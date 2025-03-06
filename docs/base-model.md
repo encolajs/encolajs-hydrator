@@ -20,19 +20,19 @@ import { BaseModel } from '@encola/hydrator';
 // Create a simple model class
 class User extends BaseModel {
   get name() {
-    return this._data.name;
+    return this.getAttribute('name');
   }
   
   set name(value) {
-    this._data.name = value;
+    this.setAttribute('name', value);
   }
   
   get email() {
-    return this._data.email;
+    return this.getAttribute('email');
   }
   
   set email(value) {
-    this._data.email = value;
+    this.setAttribute('email', value);
   }
   
   getDisplayName() {
@@ -74,23 +74,19 @@ There are two ways to define properties in a BaseModel class:
 
 ### 1. Using getters and setters
 
+1. All data for the properties are hidden inside the model's `_data` object
+2. In order to get or set a value in the `_data` object, you need to use the `getAttribute` and `setAttribute` methods
+3. The `getAttribute(name)` looks for method `_get_${name}()` method and falls back to `this._data[name]`
+4. The `setAttribute(name, value)` looks for `_set_${name}(value)` method and falls back to `this._data[name] = value`
+
 ```javascript
 class Product extends BaseModel {
-  get name() {
-    return this._data.name;
-  }
-  
-  set name(value) {
-    this._data.name = value;
-  }
-  
   get price() {
-    return this._data.price;
+    return this.getAttribute('price');
   }
   
   set price(value) {
-    // Convert to number
-    this._data.price = Number(value);
+    this.setAttribute('price', Number(value));
   }
   
   // Computed property
@@ -119,24 +115,54 @@ const Product = builder
   .build();
 ```
 
+This method would add the properties and their getters and setters to the class automatically. It will also set the `_set_${attribute}()` methods that call the Casting Manager to cast the value to the correct type.
+
 ## Key Methods
 
-### `fill(data)`
+### `setAttributes(data)`
 
 Updates the model with new data:
 
 ```javascript
-user.fill({
+user.setAttributes({
   name: 'Jane Smith',
   email: 'jane@example.com'
 });
 ```
 
-The `fill` method:
+The `setAttributes` method:
 - Updates properties using setters when available
 - Adds properties without setters to the `_data` container
-- Ignores null or undefined data
 - Returns `this` for method chaining
+
+### `setAttribute(name, value)`
+
+This method is used to set a single attribute:
+
+```javascript
+user.setAttribute('name', 'Jane Smith');
+// this is equivalent to
+user.name = 'Jane Smith';
+```
+
+### `setAttribute(name, value)`
+
+This method is used to set a single attribute:
+
+```javascript
+user.setAttribute('name', 'Jane Smith').setAttribute('email', 'jane@smith.com');
+// this is equivalent to
+user.name = 'Jane Smith';
+user.email = 'jane@smith.com'
+```
+
+### `getAttribute(name)`
+
+```javascript
+const name = user.getAttribute('name');
+// this is equivalent to
+const name = user.name;
+```
 
 ### `theId()`
 
@@ -223,10 +249,9 @@ class User extends BaseModel implements UserData {
 ### 1. Data Encapsulation
 
 BaseModel provides a clean way to encapsulate data with proper getters and setters, allowing you to:
-- Validate inputs
 - Transform data on access
+- Ensure proper data types
 - Keep implementation details private
-- Add computed properties
 
 ### 2. Consistent Interface
 
@@ -240,45 +265,23 @@ Models derived from BaseModel share a common API:
 ### 3. Foundation for Mixins
 
 BaseModel is designed to work with the ClassBuilder to easily add mixins:
-- Timestamps (created_at, updated_at)
-- Soft Delete (deleted_at, isDeleted())
-- Custom behaviors via mixins
+- Timestamps: adds `created_at`, `updated_at` attributes and `touch()` method
+- SoftDelete: adds `deleted_at` attribute, `delete()`, `isDeleted()` and `restore()` method
+- You can create your own mixins for other common functionality
 
-### 4. Simple Data Management
+### 4. Easy extensibility
 
-The internal `_data` container makes it easy to:
-- Track which properties have been set
-- Add new properties without explicit getters/setters
-- Maintain a clear separation between data and methods
+- Overwriting the `_get_${name}()` and `_set_${name}(value)` methods allows you to customize how model's attributes are accessed, stored (inside or outside the `_data` object) and how the values are transformed before being stored.
+- Overwriting the `_serialize_${name}()` methods allows you to customize how attributes are converted for  the `toJSON()` method.
+- Overwriting the default `setAttribute()` method allows you to inject custom logic when setting an attribute (like logging, triggering events etc.).
 
 ## Alternatives to Extending BaseModel
 
-While extending BaseModel provides the most functionality, you may prefer not to use it as a base class. Here are some alternatives:
+The BaseModel class is not the only way to create models in EncolaJS Hydrator but it provides a solid foundation for building typed models. 
 
-### 1. Create Your Own BaseModel
+> Note! The `add('props', { ... })` method, the `soft_delete` and `timestamps` mixins in the ClassBuilder work only with classes that extend BaseModel because it requires the presence of specific methods and properties.
 
-```javascript
-class MyCustomModel {
-  constructor(data = {}) {
-    this._data = {};
-    this.fill(data);
-  }
-  
-  fill(data) {
-    if (!data || typeof data !== 'object') return this;
-    Object.assign(this._data, data);
-    return this;
-  }
-  
-  toJSON() {
-    return {...this._data};
-  }
-  
-  // Add other methods as needed
-}
-```
-
-### 2. Use ClassBuilder with Any Class
+If you don't want to use the BaseModel you will have to create your own base classes and mixins:
 
 ```javascript
 class PlainClass {
@@ -287,37 +290,14 @@ class PlainClass {
   }
 }
 
+builder.register('data_props', /* Custom Mixin for attaching props to classes goes here */);
+
 const EnhancedClass = builder
-  .withClass(PlainClass)
-  .add('props', {
+  .add('data_props', {
     name: 'string',
     email: 'string'
   })
   .build();
-```
-
-### 3. Use Factory Functions Instead of Classes
-
-```javascript
-function createUser(data = {}) {
-  const user = {
-    _data: {...data},
-    
-    get name() {
-      return this._data.name;
-    },
-    
-    set name(value) {
-      this._data.name = value;
-    },
-    
-    toJSON() {
-      return {...this._data};
-    }
-  };
-  
-  return user;
-}
 ```
 
 ## Best Practices

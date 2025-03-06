@@ -29,8 +29,8 @@ describe('CastingManager', () => {
 
     it('converts values to strings', () => {
       expect(castingManager.cast(123, 'string')).toBe('123')
-      expect(castingManager.cast(null, 'string')).toBe('null')
-      expect(castingManager.cast(undefined, 'string')).toBe('undefined')
+      expect(castingManager.cast(null, 'string')).toBe(null)
+      expect(castingManager.cast(undefined, 'string')).toBe(null)
       expect(castingManager.cast(true, 'string')).toBe('true')
       expect(castingManager.cast([1, 2, 3], 'string')).toBe('1,2,3')
     })

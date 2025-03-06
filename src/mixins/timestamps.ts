@@ -14,11 +14,11 @@ export default function (Class: any, options: Record<string, string>) {
     return this
   }
 
-  const originalFill = Class.prototype.fill
-  if (originalFill) {
-    Class.prototype.fill = function (data: any) {
+  const originalSetAttributes = Class.prototype.setAttributes
+  if (originalSetAttributes) {
+    Class.prototype.setAttributes = function (data: any) {
       // Call the original fill method
-      const result = originalFill.call(this, data)
+      const result = originalSetAttributes.call(this, data)
 
       if (!this[createdAtField]) {
         this[createdAtField] = new Date()

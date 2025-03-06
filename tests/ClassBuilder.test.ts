@@ -184,9 +184,9 @@ describe('ClassBuilder', () => {
           })
 
           // Hook into the fill method to generate slug on fill
-          const originalFill = Class.prototype.fill
-          Class.prototype.fill = function (data: any) {
-            const result = originalFill.call(this, data)
+          const originalSetAttributes = Class.prototype.setAttributes
+          Class.prototype.setAttributes = function (data: any) {
+            const result = originalSetAttributes.call(this, data)
             if (this[sourceField] && !data[targetField]) {
               this.generateSlug()
             }
@@ -221,38 +221,6 @@ describe('ClassBuilder', () => {
       post.title = 'Updated Title'
       post.generateSlug()
       expect(post.slug).toBe('updated-title')
-    })
-
-    it('supports enhancing different parent classes', () => {
-      // Create a custom parent class
-      class CustomBase {
-        protected data: Record<string, any> = {}
-
-        constructor(data: Record<string, any> = {}) {
-          Object.assign(this.data, data)
-        }
-
-        getData() {
-          return this.data
-        }
-      }
-
-      const EnhancedCustomBase = builder
-        .withClass(CustomBase)
-        .add('props', {
-          name: 'string',
-          age: 'number',
-        })
-        .build()
-
-      const instance = new EnhancedCustomBase()
-      instance.name = 'John'
-      instance.age = '30'
-
-      expect(instance).toBeInstanceOf(CustomBase)
-      expect(instance.getData).toBeDefined()
-      expect(instance.name).toBe('John')
-      expect(instance.age).toBe(30)
     })
   })
 

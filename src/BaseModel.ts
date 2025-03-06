@@ -8,25 +8,56 @@ export default class BaseModel {
   protected _data: Record<string, any> = {}
 
   constructor(data: Record<string, any> | undefined | null = {}) {
-    this.fill(data)
+    this.setAttributes(data)
   }
 
-  fill(data: Record<string, any> | undefined | null): this {
-    if (!data || typeof data !== 'object') {
+  setAttributes(attributes: Record<string, any> | undefined | null): this {
+    if (!attributes || typeof attributes !== 'object') {
       return this
     }
 
-    // Use property setters to ensure casting is applied
-    Object.entries(data).forEach(([key, value]) => {
-      if (Object.getOwnPropertyDescriptor(this.constructor.prototype, key)) {
-        // This will trigger property setters if they exist
-        ;(this as any)[key] = value
-      } else {
-        // For properties not defined in the class, store directly in _data
-        this._data[key] = value
-      }
+    Object.entries(attributes).forEach(([key, value]) => {
+      this.setAttribute(key, value)
     })
 
+    return this
+  }
+
+  getAttributes(): Record<string, any> {
+    return this._data
+  }
+
+  getAttribute(key: string): any {
+    // Check for a custom getter method
+    const getterMethod = `_get_${key}`
+    if (typeof (this as any)[getterMethod] === 'function') {
+      return (this as any)[getterMethod]()
+    }
+
+    // Default to getting from _data
+    return this._data[key]
+  }
+
+  serializeAttribute(key: string): any {
+    // Check for a custom serializer method
+    const serializerMethod = `_serialize_${key}`
+    if (typeof (this as any)[serializerMethod] === 'function') {
+      return (this as any)[serializerMethod]()
+    }
+
+    return this._data[key]
+  }
+
+  setAttribute(key: string, value: any): this {
+    // Check for a custom setter method
+    const setterMethod = `_set_${key}`
+    if (typeof (this as any)[setterMethod] === 'function') {
+      (this as any)[setterMethod](value)
+      return this
+    }
+
+    // Default to setting directly in _data
+    this._data[key] = value
     return this
   }
 
@@ -42,13 +73,6 @@ export default class BaseModel {
     // Get all property names, including those from prototype
     const propNames = new Set([
       ...Object.keys(this._data || {}),
-      ...Object.getOwnPropertyNames(this).filter(
-        (prop) =>
-          prop !== 'constructor' &&
-          prop !== 'toJSON' &&
-          prop !== 'clone' &&
-          !prop.startsWith('_')
-      ),
     ])
 
     // Add each property to result
@@ -58,7 +82,7 @@ export default class BaseModel {
         return
       }
 
-      result[prop] = (this as any)[prop]
+      result[prop] = this.serializeAttribute(prop)
     })
 
     return result

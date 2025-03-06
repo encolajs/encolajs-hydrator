@@ -79,12 +79,12 @@ describe('BaseModel', () => {
     })
   })
 
-  describe('fill()', () => {
+  describe('setAttributes()', () => {
     it('should set properties using setters when available', () => {
       const testModel = new TestModel()
 
       // Use private method to initialize data
-      ;(testModel as any).fill({
+      ;(testModel as any).setAttributes({
         name: 'Jane Smith',
         email: 'jane@example.com',
         age: 25,
@@ -101,7 +101,7 @@ describe('BaseModel', () => {
       const testModel = new TestModel()
 
       // Use private method to initialize data with properties that don't have setters
-      ;(testModel as any).fill({
+      ;(testModel as any).setAttributes({
         name: 'Bob',
         customField: 'custom value',
       })
@@ -111,7 +111,7 @@ describe('BaseModel', () => {
     })
 
     it('should update model with new data', () => {
-      model.fill({
+      model.setAttributes({
         name: 'Jane Smith',
         email: 'jane@example.com',
       })
@@ -123,7 +123,7 @@ describe('BaseModel', () => {
     })
 
     it('should return this for chaining', () => {
-      const result = model.fill({ name: 'New Name' })
+      const result = model.setAttributes({ name: 'New Name' })
 
       expect(result).toBe(model)
     })
@@ -131,10 +131,10 @@ describe('BaseModel', () => {
     it('should handle null or undefined data', () => {
       const originalName = model.name
 
-      model.fill(null)
+      model.setAttributes(null)
       expect(model.name).toBe(originalName)
 
-      model.fill(undefined)
+      model.setAttributes(undefined)
       expect(model.name).toBe(originalName)
     })
   })
@@ -158,13 +158,13 @@ describe('BaseModel', () => {
       expect(json._data).toBeUndefined()
     })
 
-    it('should handle models with custom properties', () => {
+    it('should ignore custom properties from models', () => {
       // Add a non-getter property directly to _data
       ;(model as any).customField = 'custom value'
 
       const json = model.toJSON()
 
-      expect(json.customField).toBe('custom value')
+      expect(json.customField).toBe(undefined)
     })
   })
 

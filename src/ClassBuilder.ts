@@ -46,18 +46,30 @@ export default class ClassBuilder {
     Object.entries(props).forEach(([prop, typeSpec]) => {
       const spec = normalizePropertySchema(typeSpec)
       Class.prototype._propertyTypes[prop] = spec.type
-      // Use arrow functions to avoid 'this' issues
-      const getter =
-        spec.get ||
-        function (this: any) {
-          return this._data[prop]
-        }
 
-      const setter =
-        spec.set ||
-        function (this: any, value: any) {
-          this._data[prop] = castingManager.cast(value, spec.type)
-        }
+      Class.prototype._propertyTypes[prop] = spec.type
+
+      if (spec.get) {
+        Class.prototype[`_get_${prop}`] = spec.get
+      }
+
+      Class.prototype[`_set_${prop}`] = spec.set || function (value: any) {
+        this._data[prop] = castingManager.cast(value, spec.type)
+      }
+
+      // Define custom serializer method
+      Class.prototype[`_serialize_${prop}`] = function () {
+        return castingManager.serialize(this._data[prop], spec.type)
+      }
+
+      // Define the property getters/setters that always use getAttribute/setAttribute
+      const getter = function (this: any) {
+        return this.getAttribute(prop)
+      }
+
+      const setter = function (this: any, value: any) {
+        this.setAttribute(prop, value)
+      }
 
       Object.defineProperty(Class.prototype, prop, {
         get: getter as () => any,
@@ -147,7 +159,9 @@ export default class ClassBuilder {
       }
     }
 
-    this.withClass(CustomModel).add('props', props).add('methods', methods)
+    this.withClass(CustomModel)
+        .add('props', props)
+        .add('methods', methods)
 
     Object.entries(mixins).forEach(([name, options]) => {
       this.add(name, options)

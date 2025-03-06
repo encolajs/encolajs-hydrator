@@ -20,18 +20,8 @@ export default class BaseCollection<T = any> extends Array<T> {
   }
 
   protected _getId(item: any): any {
-    if (item === null || item === undefined) {
-      return null
-    }
-
-    // If the item is an object, try to get the ID attribute
     if (typeof item === 'object') {
-      // Try to access the ID via property or via _data
-      return item[this._idAttribute] !== undefined
-        ? item[this._idAttribute]
-        : item._data && item._data[this._idAttribute] !== undefined
-        ? item._data[this._idAttribute]
-        : null
+      return item[this._idAttribute] !== undefined ? item[this._idAttribute] : null
     }
 
     return null
@@ -226,12 +216,10 @@ export default class BaseCollection<T = any> extends Array<T> {
         let aValue = aAny[attributeOrFunction]
         let bValue = bAny[attributeOrFunction]
 
-        // Handle string comparison case-insensitively
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           return aValue.localeCompare(bValue)
         }
 
-        // Default comparison
         if (aValue < bValue) return -1
         if (aValue > bValue) return 1
         return 0
@@ -298,10 +286,7 @@ export default class BaseCollection<T = any> extends Array<T> {
       // Find by attribute value
       findFn = (item: T) => {
         const itemAny = item as any
-        if (typeof itemAny === 'object' && itemAny !== null) {
-          return itemAny[attributeOrFunction] === value
-        }
-        return false
+        return typeof itemAny === 'object' && itemAny[attributeOrFunction] === value
       }
     } else {
       // Use provided find function

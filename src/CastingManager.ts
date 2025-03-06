@@ -31,11 +31,15 @@ function asDecimal(value: any, params: string[] = ['2']) {
   return isNaN(num) ? 0 : Number(num.toFixed(precision))
 }
 
+function asInteger(value: any): number | null {
+  return asDecimal(value, ['0'])
+}
+
 function asBoolean(value: any) {
   return !!value
 }
 function asString(value: any) {
-  return String(value)
+  return value === null || value === undefined ? null : String(value)
 }
 
 const asArray: CastFunction = function (
@@ -114,6 +118,7 @@ export default class CastingManager {
     this.register('bool', asBoolean)
     this.register('boolean', asBoolean)
     this.register('number', asNumber)
+    this.register('integer', asInteger)
     this.register('decimal', asDecimal)
     this.register('string', asString)
     this.register('array', asArray, serializeArray)
@@ -141,7 +146,7 @@ export default class CastingManager {
   ): this {
     let castFn = function (value: any) {
       if (value === null || value === undefined) {
-        return null
+        value = {}
       }
 
       if (value instanceof ModelClass) {
@@ -208,7 +213,7 @@ export default class CastingManager {
     }
 
     if (!serializeFn) {
-      console.error(
+      console.info(
         `No registered serializer for ${type}. Returning value as is.`
       )
       return value
