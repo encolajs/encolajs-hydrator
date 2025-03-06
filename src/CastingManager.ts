@@ -194,6 +194,10 @@ export default class CastingManager {
     }
   }
 
+  hasCaster(type: string) {
+    return this.casters.get(type.toLowerCase()) !== undefined
+  }
+
   serialize(value: any, typeSpec: string): any {
     if (
       value !== null &&
@@ -225,5 +229,9 @@ export default class CastingManager {
       console.error(`Error serializing value from ${type}:`, error)
       return value
     }
+  }
+
+  hasSerializer(type: string) {
+    return this.serializers.get(type.toLowerCase()) !== undefined
   }
 }

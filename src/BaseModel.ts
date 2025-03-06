@@ -28,21 +28,13 @@ export default class BaseModel {
   }
 
   getAttribute(key: string): any {
+    if (this._data[key] === undefined) {
+      this.setAttribute(key, null)
+    }
     // Check for a custom getter method
     const getterMethod = `_get_${key}`
     if (typeof (this as any)[getterMethod] === 'function') {
       return (this as any)[getterMethod]()
-    }
-
-    // Default to getting from _data
-    return this._data[key]
-  }
-
-  serializeAttribute(key: string): any {
-    // Check for a custom serializer method
-    const serializerMethod = `_serialize_${key}`
-    if (typeof (this as any)[serializerMethod] === 'function') {
-      return (this as any)[serializerMethod]()
     }
 
     return this._data[key]
@@ -56,9 +48,27 @@ export default class BaseModel {
       return this
     }
 
-    // Default to setting directly in _data
-    this._data[key] = value
+    this._data[key] = this.castAttribute(key, value)
     return this
+  }
+
+  castAttribute(key: string, value: any): any {
+    const casterMethod = `_cast_${key}`
+    if (typeof (this as any)[casterMethod] === 'function') {
+      return (this as any)[casterMethod](value)
+    }
+
+    return value
+  }
+
+  serializeAttribute(key: string): any {
+    // Check for a custom serializer method
+    const serializerMethod = `_serialize_${key}`
+    if (typeof (this as any)[serializerMethod] === 'function') {
+      return (this as any)[serializerMethod]()
+    }
+
+    return this._data[key]
   }
 
   theId(): unknown {

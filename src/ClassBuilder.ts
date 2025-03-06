@@ -53,13 +53,21 @@ export default class ClassBuilder {
         Class.prototype[`_get_${prop}`] = spec.get
       }
 
-      Class.prototype[`_set_${prop}`] = spec.set || function (value: any) {
-        this._data[prop] = castingManager.cast(value, spec.type)
+      if (spec.set) {
+        Class.prototype[`_get_${prop}`] = spec.set
       }
 
-      // Define custom serializer method
-      Class.prototype[`_serialize_${prop}`] = function () {
-        return castingManager.serialize(this._data[prop], spec.type)
+      if (spec.type !== 'any' && castingManager.hasCaster(spec.type)) {
+        Class.prototype[`_cast_${prop}`] = function (value: any) {
+          return castingManager.cast(value, spec.type)
+        }
+      }
+
+
+      if (spec.type !== 'any' && castingManager.hasSerializer(spec.type)) {
+        Class.prototype[`_serialize_${prop}`] = function () {
+          return castingManager.serialize(this._data[prop], spec.type)
+        }
       }
 
       // Define the property getters/setters that always use getAttribute/setAttribute

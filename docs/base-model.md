@@ -1,24 +1,55 @@
 # BaseModel
 
-The `BaseModel` class serves as the foundation for creating data models in the EncolaJS Hydrator library. It provides essential functionality for manipulating, storing, and converting data between plain objects and structured model instances.
+The `BaseModel` class is the foundation for creating structured data models in the EncolaJS Hydrator library. It provides a robust system for handling, transforming, and serializing data with a focus on extensibility and type safety.
 
-## Overview
+## Core Architecture
 
-BaseModel provides:
+BaseModel uses a carefully designed architecture that separates data storage from data access:
 
-1. A simple internal data container (`_data`)
-2. Methods to fill the model with data
-3. ID attribute handling
-4. JSON serialization
-5. Deep cloning capability
+1. **Internal Data Container**: All data is stored in a protected `_data` object
+2. **Attribute Access Indirection**: All property access goes through getter/setter methods
+3. **Custom Attribute Handlers**: Special methods allow customization of how attributes are retrieved, set, and serialized
+4. **Type Conversion**: Integration with CastingManager for automatic type conversion
+
+This architecture enables powerful extensibility while maintaining a clean, consistent API.
+
+## Key Concepts
+
+### Attribute Access Flow
+
+When you access a model attribute, the following sequence occurs:
+
+1. **Getter Method**: When reading a property (e.g., `model.name`), the getter calls `getAttribute('name')`
+2. **Custom Getter Check**: `getAttribute()` checks for a custom getter method `_get_name()`
+3. **Attribute Retrieval**: If no custom getter exists, retrieves the value from `this._data.name`
+4. **Default Value Handling**: If the attribute doesn't exist, it's initialized with `null` before retrieval. This is deliberate.
+
+When setting an attribute, a similar flow occurs:
+
+1. **Setter Method**: When setting a property (e.g., `model.name = 'John'`), the setter calls `setAttribute('name', 'John')`
+2. **Custom Setter Check**: `setAttribute()` checks for a custom setter method `_set_name(value)`
+3. **Type Casting**: If no custom setter exists, the value is cast using `castAttribute('name', value)`
+4. **Storage**: The (potentially transformed) value is stored in `this._data.name`
+
+### Custom Attribute Handlers
+
+BaseModel supports three types of custom attribute handlers:
+
+| Handler Type | Method Pattern | Purpose |
+|--------------|----------------|---------|
+| Getter | `_get_attributeName()` | Customize how an attribute is retrieved |
+| Setter | `_set_attributeName(value)` | Customize how an attribute is stored |
+| Caster | `_cast_attributeName(value)` | Customize how an attribute is type-cast |
+| Serializer | `_serialize_attributeName()` | Customize how an attribute is serialized |
 
 ## Basic Usage
 
 ```javascript
 import { BaseModel } from '@encola/hydrator';
 
-// Create a simple model class
+// Create a model class with properties
 class User extends BaseModel {
+  // Define getters and setters for attributes
   get name() {
     return this.getAttribute('name');
   }
@@ -35,8 +66,15 @@ class User extends BaseModel {
     this.setAttribute('email', value);
   }
   
+  // Add domain-specific methods
   getDisplayName() {
     return this.name || this.email.split('@')[0];
+  }
+  
+  // Custom getter example: derived property
+  get initials() {
+    const parts = (this.name || '').split(' ');
+    return parts.map(part => part.charAt(0).toUpperCase()).join('');
   }
 }
 
@@ -47,37 +85,27 @@ const user = new User({
 });
 
 console.log(user.name); // "John Doe"
+console.log(user.initials); // "JD"
 console.log(user.getDisplayName()); // "John Doe"
 
-// Update values
-user.name = 'Jane Doe';
-console.log(user.name); // "Jane Doe"
+// Update a value
+user.name = 'Jane Smith';
+console.log(user.name); // "Jane Smith"
+console.log(user.initials); // "JS"
 
 // Convert to plain object
 const json = user.toJSON();
-console.log(json); // { name: "Jane Doe", email: "john@example.com" }
+console.log(json); // { name: "Jane Smith", email: "john@example.com" }
+
+// Clone the model
+const clonedUser = user.clone();
 ```
 
-## Constructor
+## Advanced Customization
 
-The BaseModel constructor accepts an optional data object to initialize the model:
+### Custom Getters and Setters
 
-```javascript
-const user = new User(); // Empty model
-const user = new User(null); // Empty model
-const user = new User({ name: 'John' }); // Model with initial data
-```
-
-## Model Properties
-
-There are two ways to define properties in a BaseModel class:
-
-### 1. Using getters and setters
-
-1. All data for the properties are hidden inside the model's `_data` object
-2. In order to get or set a value in the `_data` object, you need to use the `getAttribute` and `setAttribute` methods
-3. The `getAttribute(name)` looks for method `_get_${name}()` method and falls back to `this._data[name]`
-4. The `setAttribute(name, value)` looks for `_set_${name}(value)` method and falls back to `this._data[name] = value`
+You can define custom behavior for attribute access with special methods:
 
 ```javascript
 class Product extends BaseModel {
@@ -86,17 +114,119 @@ class Product extends BaseModel {
   }
   
   set price(value) {
-    this.setAttribute('price', Number(value));
+    this.setAttribute('price', value);
   }
   
-  // Computed property
-  get priceWithTax() {
-    return this.price * 1.2;
+  // Custom getter that formats the price
+  _get_price() {
+    const rawPrice = this._data.price || 0;
+    return `$${rawPrice.toFixed(2)}`;
+  }
+  
+  // Custom setter that handles different price inputs
+  _set_price(value) {
+    if (typeof value === 'string') {
+      // Remove currency symbols and convert to number
+      value = parseFloat(value.replace(/[^0-9.]/g, ''));
+    }
+    this._data.price = isNaN(value) ? 0 : value;
+    // since all we are doing here is ensuring the proper type,
+    // the same could be achieved implementing _cast_price(value) instead
   }
 }
+
+const product = new Product({ price: '25.99' });
+console.log(product.price); // "$25.99"
+
+product.price = '$30.50';
+console.log(product.price); // "$30.50"
 ```
 
-### 2. Using ClassBuilder (recommended)
+### Custom Type Casting
+
+You can define special caster methods for type conversion:
+
+```javascript
+class Task extends BaseModel {
+  get dueDate() {
+    return this.getAttribute('dueDate');
+  }
+  
+  set dueDate(value) {
+    this.setAttribute('dueDate', value);
+  }
+  
+  // Custom type casting for due date
+  _cast_dueDate(value) {
+    if (value === 'tomorrow') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
+    } else if (value === 'next week') {
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      return nextWeek;
+    } else if (value instanceof Date) {
+      return value;
+    } else {
+      return new Date(value);
+    }
+  }
+}
+
+const task = new Task({ dueDate: 'tomorrow' });
+console.log(task.dueDate instanceof Date); // true
+```
+
+### Custom Serialization
+
+You can control how attributes are serialized with serializer methods:
+
+```javascript
+class User extends BaseModel {
+  get password() {
+    return this.getAttribute('password');
+  }
+  
+  set password(value) {
+    this.setAttribute('password', value);
+  }
+  
+  // Custom serializer to never include password in JSON
+  _serialize_password() {
+    return undefined; // Exclude from JSON output
+  }
+  
+  get birthdate() {
+    return this.getAttribute('birthdate');
+  }
+  
+  set birthdate(value) {
+    this.setAttribute('birthdate', value);
+  }
+  
+  // Custom serializer to format dates
+  _serialize_birthdate() {
+    if (!this._data.birthdate) return null;
+    const date = new Date(this._data.birthdate);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  }
+}
+
+const user = new User({
+  name: 'John',
+  password: 'secret123',
+  birthdate: new Date(1990, 0, 15)
+});
+
+console.log(user.toJSON());
+// { name: "John", birthdate: "1990-01-15" }
+// Notice password is excluded
+```
+
+## Integration with ClassBuilder
+
+While you can manually define getters and setters for every attribute, the ClassBuilder provides a more streamlined approach:
 
 ```javascript
 import { CastingManager, ClassBuilder, BaseModel } from '@encola/hydrator';
@@ -104,214 +234,377 @@ import { CastingManager, ClassBuilder, BaseModel } from '@encola/hydrator';
 const castingManager = new CastingManager();
 const builder = new ClassBuilder(castingManager);
 
-const Product = builder
-  .withClass(class extends BaseModel {})
-  .add('props', {
-    name: 'string',
-    price: 'number',
-    description: 'string',
-    createdAt: 'date'
-  })
-  .build();
-```
-
-This method would add the properties and their getters and setters to the class automatically. It will also set the `_set_${attribute}()` methods that call the Casting Manager to cast the value to the correct type.
-
-## Key Methods
-
-### `setAttributes(data)`
-
-Updates the model with new data:
-
-```javascript
-user.setAttributes({
-  name: 'Jane Smith',
-  email: 'jane@example.com'
+// Create a model class with typed properties
+const Product = builder.newModelClass({
+  name: 'string',
+  price: 'decimal:2',
+  description: 'any', // No type casting here
+  category: 'string',
+  tags: 'array:string',
+  inStock: 'boolean',
+  createdAt: 'date'
+}, {
+  // Add mixins
+  timestamps: {},
+  softDelete: {}
+}, {
+  // Add methods
+  isDiscounted() {
+    return this.salePrice < this.price;
+  },
+  
+  getDisplayPrice() {
+    return `$${this.price}`;
+  }
 });
+
+// Create an instance
+const product = new Product({
+  name: 'Laptop',
+  price: '999.99',
+  description: 'Powerful laptop for developers',
+  category: 'electronics',
+  tags: ['computer', 'laptop', 'tech'],
+  inStock: true
+});
+
+console.log(product.price); // 999.99 (as number)
+console.log(product.tags); // ['computer', 'laptop', 'tech']
+console.log(product.created_at instanceof Date); // true
 ```
 
-The `setAttributes` method:
-- Updates properties using setters when available
-- Adds properties without setters to the `_data` container
-- Returns `this` for method chaining
+The ClassBuilder approach:
+- Automatically creates getters and setters
+- Handles type casting via CastingManager
+- Sets up serialization for each attribute
+- Makes properties enumerable for `Object.keys()` and other operations
 
-### `setAttribute(name, value)`
+## Working with Complex Relations
 
-This method is used to set a single attribute:
+BaseModel can handle complex relationships including nested models and collections:
 
 ```javascript
-user.setAttribute('name', 'Jane Smith');
-// this is equivalent to
-user.name = 'Jane Smith';
+// Assuming we have already defined User and Task models
+const User = builder.newModelClass({
+  name: 'string',
+  email: 'string'
+});
+
+const Task = builder.newModelClass({
+  title: 'string',
+  completed: 'boolean',
+  // Reference to assigned user
+  assignedTo: 'user'  // This will use the user caster from CastingManager
+});
+
+// Register the models with CastingManager
+castingManager.registerModel('user', User);
+castingManager.registerModel('task', Task);
+
+// Create a task with a nested user
+const task = new Task({
+  title: 'Implement feature',
+  completed: false,
+  assignedTo: {
+    name: 'John Doe',
+    email: 'john@example.com'
+  }
+});
+
+console.log(task.assignedTo instanceof User); // true
+console.log(task.assignedTo.name); // "John Doe"
+
+// Serialization correctly handles nested models
+const json = task.toJSON();
+console.log(json.assignedTo.name); // "John Doe"
 ```
 
-### `setAttribute(name, value)`
+## ID Management
 
-This method is used to set a single attribute:
-
-```javascript
-user.setAttribute('name', 'Jane Smith').setAttribute('email', 'jane@smith.com');
-// this is equivalent to
-user.name = 'Jane Smith';
-user.email = 'jane@smith.com'
-```
-
-### `getAttribute(name)`
+The BaseModel provides special handling for model IDs:
 
 ```javascript
-const name = user.getAttribute('name');
-// this is equivalent to
-const name = user.name;
-```
-
-### `theId()`
-
-Gets the ID of the model:
-
-```javascript
-class User extends BaseModel {
+class Customer extends BaseModel {
   constructor(data) {
     super(data);
-    this._idAttribute = 'userId'; // Custom ID field (default is 'id')
+    this._idAttribute = 'customerId'; // Override default 'id'
   }
   
-  get userId() {
-    return this._data.userId;
+  get customerId() {
+    return this.getAttribute('customerId');
   }
   
-  set userId(value) {
-    this._data.userId = value;
+  set customerId(value) {
+    this.setAttribute('customerId', value);
   }
 }
 
-const user = new User({ userId: 123 });
-console.log(user.theId()); // 123
+const customer = new Customer({ customerId: 'C12345' });
+console.log(customer.theId()); // "C12345"
 ```
 
-### `toJSON()`
+The `theId()` method is particularly useful when working with collections and  checking for uniqueness, for example when you don't want the same customer added to a collection of customers.
 
-Converts the model to a plain object:
+## Inheritance and Reuse
+
+You can create a hierarchy of model classes to share common behavior:
 
 ```javascript
-const data = user.toJSON();
+// Base model for entities with timestamps
+class TimestampedModel extends BaseModel {
+  constructor(data) {
+    super(data);
+    
+    // Set initial timestamps if not provided
+    if (!this._data.createdAt) {
+      this._data.createdAt = new Date();
+    }
+    if (!this._data.updatedAt) {
+      this._data.updatedAt = new Date();
+    }
+  }
+  
+  get createdAt() {
+    return this.getAttribute('createdAt');
+  }
+  
+  set createdAt(value) {
+    this.setAttribute('createdAt', value);
+  }
+  
+  get updatedAt() {
+    return this.getAttribute('updatedAt');
+  }
+  
+  set updatedAt(value) {
+    this.setAttribute('updatedAt', value);
+  }
+  
+  // Update the timestamp when model changes
+  touch() {
+    this.updatedAt = new Date();
+    return this;
+  }
+  
+  // Override setAttribute to update timestamp
+  setAttribute(key, value) {
+    const result = super.setAttribute(key, value);
+    if (key !== 'updatedAt') {
+      this.touch();
+    }
+    return result;
+  }
+}
+
+// Model that extends the timestamped model
+class Article extends TimestampedModel {
+  get title() {
+    return this.getAttribute('title');
+  }
+  
+  set title(value) {
+    this.setAttribute('title', value);
+  }
+  
+  get content() {
+    return this.getAttribute('content');
+  }
+  
+  set content(value) {
+    this.setAttribute('content', value);
+  }
+}
+
+const article = new Article({
+  title: 'Getting Started with EncolaJS',
+  content: 'EncolaJS is a powerful library...'
+});
+
+console.log(article.createdAt instanceof Date); // true
+article.title = 'Updated Title';
+console.log(article.updatedAt > article.createdAt); // true
 ```
 
-The `toJSON` method:
-- Includes all properties from `_data` and defined getters
-- Excludes methods and private properties (starting with `_`)
-- Returns a plain JavaScript object suitable for JSON serialization
+## TypeScript Integration
 
-### `clone()`
-
-Creates a deep copy of the model:
-
-```javascript
-const original = new User({ name: 'John', email: 'john@example.com' });
-const copy = original.clone();
-
-// Modify the copy
-copy.name = 'Jane';
-
-// Original remains unchanged
-console.log(original.name); // "John"
-console.log(copy.name); // "Jane"
-```
-
-## Working with TypeScript
-
-When using BaseModel with TypeScript, you can define interfaces to properly type your models:
+When using BaseModel with TypeScript, define interfaces to represent your model structure:
 
 ```typescript
 interface UserData {
   id?: number;
   name: string;
   email: string;
-  createdAt?: Date;
+  age?: number;
+  preferences?: Record<string, any>;
 }
 
 class User extends BaseModel implements UserData {
-  get id() { return this._data.id; }
-  set id(value) { this._data.id = value; }
+  declare id?: number;
+  declare name: string;
+  declare email: string;
+  declare age?: number;
+  declare preferences?: Record<string, any>;
   
-  get name() { return this._data.name; }
-  set name(value) { this._data.name = value; }
+  constructor(data: Partial<UserData> = {}) {
+    super(data);
+  }
   
-  get email() { return this._data.email; }
-  set email(value) { this._data.email = value; }
+  get id() { return this.getAttribute('id'); }
+  set id(value) { this.setAttribute('id', value); }
   
-  get createdAt() { return this._data.createdAt; }
-  set createdAt(value) { this._data.createdAt = value; }
-}
-```
-
-## Why Use BaseModel?
-
-### 1. Data Encapsulation
-
-BaseModel provides a clean way to encapsulate data with proper getters and setters, allowing you to:
-- Transform data on access
-- Ensure proper data types
-- Keep implementation details private
-
-### 2. Consistent Interface
-
-Models derived from BaseModel share a common API:
-- Standard constructor
-- Filling with data
-- JSON serialization
-- ID management
-- Deep cloning
-
-### 3. Foundation for Mixins
-
-BaseModel is designed to work with the ClassBuilder to easily add mixins:
-- Timestamps: adds `created_at`, `updated_at` attributes and `touch()` method
-- SoftDelete: adds `deleted_at` attribute, `delete()`, `isDeleted()` and `restore()` method
-- You can create your own mixins for other common functionality
-
-### 4. Easy extensibility
-
-- Overwriting the `_get_${name}()` and `_set_${name}(value)` methods allows you to customize how model's attributes are accessed, stored (inside or outside the `_data` object) and how the values are transformed before being stored.
-- Overwriting the `_serialize_${name}()` methods allows you to customize how attributes are converted for  the `toJSON()` method.
-- Overwriting the default `setAttribute()` method allows you to inject custom logic when setting an attribute (like logging, triggering events etc.).
-
-## Alternatives to Extending BaseModel
-
-The BaseModel class is not the only way to create models in EncolaJS Hydrator but it provides a solid foundation for building typed models. 
-
-> Note! The `add('props', { ... })` method, the `soft_delete` and `timestamps` mixins in the ClassBuilder work only with classes that extend BaseModel because it requires the presence of specific methods and properties.
-
-If you don't want to use the BaseModel you will have to create your own base classes and mixins:
-
-```javascript
-class PlainClass {
-  constructor(data = {}) {
-    this.data = data;
+  get name() { return this.getAttribute('name'); }
+  set name(value) { this.setAttribute('name', value); }
+  
+  get email() { return this.getAttribute('email'); }
+  set email(value) { this.setAttribute('email', value); }
+  
+  get age() { return this.getAttribute('age'); }
+  set age(value) { this.setAttribute('age', value); }
+  
+  get preferences() { return this.getAttribute('preferences'); }
+  set preferences(value) { this.setAttribute('preferences', value); }
+  
+  getDisplayName(): string {
+    return this.name || this.email.split('@')[0];
   }
 }
-
-builder.register('data_props', /* Custom Mixin for attaching props to classes goes here */);
-
-const EnhancedClass = builder
-  .add('data_props', {
-    name: 'string',
-    email: 'string'
-  })
-  .build();
 ```
 
-## Best Practices
+## Edge Cases and Best Practices
 
-1. **Use ClassBuilder**: While you can create models manually with getters and setters, the ClassBuilder provides type casting and mixins.
+### Handling Nullable Values
 
-2. **Keep models focused**: Each model should represent a single entity or concept.
+The BaseModel initializes undefined attributes with `null` on access:
 
-3. **Add meaningful methods**: Include methods that provide behavior relevant to the model.
+```javascript
+const user = new User();
+console.log(user.name); // null (not undefined)
+```
 
-5. **Consider performance**: For applications with thousands of model instances, be mindful of memory usage.
+This makes property access more predictable and prevents `undefined` errors. It is a deliberate design choice to handle nested relations of objects and collections. 
 
-6. **Document with JSDoc or TypeScript**: Define interfaces for your models to improve developer experience.
+For example, calling `order.items.add({})` on an empty Order model will ensure that `order.items` is a collection and calling `add()` on it won't generate an error.
 
-7. **Use mixins**: Create base models for shared functionality and mixins for specific behaviors.
+### Circular References
 
-8. **Use computed properties**: Add getters for derived values instead of storing them.
+When dealing with models that reference each other, be careful with serialization:
+
+```javascript
+// Potential circular reference problem
+const user = new User({ name: 'John' });
+const task = new Task({ title: 'Test', assignedTo: user });
+
+// If we add a task reference back to the user
+user._data.currentTask = task;
+
+// This could cause a stack overflow during serialization
+// To fix, add a custom serializer:
+User.prototype._serialize_currentTask = function() {
+  // Return just the ID or simplified representation
+  return this._data.currentTask ? { id: this._data.currentTask.theId() } : null;
+};
+```
+
+### Performance Considerations
+
+For applications with many model instances:
+
+1. **Minimize deep cloning**: Use references when appropriate
+2. **Batch updates**: Use `setAttributes()` instead of multiple individual property assignments
+3. **Avoid unnecessary getters/setters**: For internal properties, under certain conditions you may access `_data` directly in methods
+4. **Consider using `any` instead of `string` as a type**: This will omit the casting and serialization logic. Strings should be used only if you want to do string manipulation.
+5. **Consider lazy loading**: For complex nested structures, load data on demand
+
+### Common Patterns
+
+#### State Tracking
+
+```javascript
+class Form extends BaseModel {
+  constructor(data) {
+    super(data);
+    this._originalData = JSON.stringify(this._data);
+  }
+  
+  get isDirty() {
+    return JSON.stringify(this._data) !== this._originalData;
+  }
+  
+  reset() {
+    this._data = JSON.parse(this._originalData);
+    return this;
+  }
+  
+  commit() {
+    this._originalData = JSON.stringify(this._data);
+    return this;
+  }
+}
+```
+
+#### Computed Properties
+
+```javascript
+class Invoice extends BaseModel {
+  // ... getters and setters for items, taxRate, etc ...
+  
+  get subtotal() {
+    return (this._data.items || []).reduce(
+      (sum, item) => sum + (item.price * item.quantity), 0
+    );
+  }
+  
+  get taxAmount() {
+    return this.subtotal * (this._data.taxRate || 0) / 100;
+  }
+  
+  get total() {
+    return this.subtotal + this.taxAmount;
+  }
+}
+```
+
+## When to Use BaseModel
+
+BaseModel is ideal for:
+
+1. **Structured data**: When you need a consistent structure for data objects
+2. **Type conversion**: When data comes from external sources (API, forms) and needs type casting
+3. **Data validation**: As a foundation for implementing validation rules
+4. **Complex serialization**: When you need custom serialization logic
+5. **Domain modeling**: When you want to add behavior to your data objects
+
+## Comparison with Other Approaches
+
+### BaseModel vs Plain Objects
+
+| Feature | BaseModel | Plain Objects |
+|---------|-----------|---------------|
+| Type Safety | ✅ Built-in with casting | ❌ Requires manual validation |
+| Behavior | ✅ Can add methods | ❌ Limited to properties |
+| Custom Serialization | ✅ Built-in | ❌ Requires separate logic |
+| Memory Overhead | ⚠️ Higher | ✅ Lower |
+| Simplicity | ⚠️ More structure | ✅ Simpler |
+
+### BaseModel vs Full ORM
+
+| Feature | BaseModel | Full ORM |
+|---------|-----------|----------|
+| Database Integration | ❌ Manual | ✅ Built-in |
+| Schema Definition | ⚠️ Manual | ✅ Declarative |
+| Query Building | ❌ Not included | ✅ Built-in |
+| Relationships | ⚠️ Manual | ✅ Declarative |
+| Flexibility | ✅ High | ⚠️ Framework-dependent |
+| Size | ✅ Lightweight | ❌ Heavier |
+
+## Summary
+
+The BaseModel provides a powerful foundation for creating structured data models with:
+
+1. **Consistent Data Handling**: All properties are managed through getAttribute/setAttribute
+2. **Extensible Architecture**: Custom getters, setters, and serializers
+3. **Integration Points**: Works seamlessly with CastingManager and ClassBuilder
+4. **Performance Optimizations**: Efficient data storage and retrieval
+5. **Developer Experience**: Predictable API and behavior
+
+By understanding the internal architecture and customization points, you can leverage BaseModel to create expressive, type-safe domain models that enhance your application architecture.

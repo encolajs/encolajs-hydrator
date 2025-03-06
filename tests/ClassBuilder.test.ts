@@ -134,7 +134,7 @@ describe('ClassBuilder', () => {
         content: 'This is a test',
       })
 
-      expect(post.deleted_at).toBeUndefined()
+      expect(post.deleted_at).toBeNull()
       expect(post.isDeleted()).toBe(false)
 
       // Advance time and delete the post
