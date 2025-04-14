@@ -5,6 +5,9 @@ export default defineConfig({
   description: "Documentation for EncolaJS Hydrator",
   base: "/hydrator/",
   themeConfig: {
+    search: {
+      provider: 'local'
+    },
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/' },
