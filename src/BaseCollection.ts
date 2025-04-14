@@ -21,7 +21,9 @@ export default class BaseCollection<T = any> extends Array<T> {
 
   protected _getId(item: any): any {
     if (typeof item === 'object') {
-      return item[this._idAttribute] !== undefined ? item[this._idAttribute] : null
+      return item[this._idAttribute] !== undefined
+        ? item[this._idAttribute]
+        : null
     }
 
     return null
@@ -213,8 +215,8 @@ export default class BaseCollection<T = any> extends Array<T> {
         const aAny = a as any
         const bAny = b as any
 
-        let aValue = aAny[attributeOrFunction]
-        let bValue = bAny[attributeOrFunction]
+        const aValue = aAny[attributeOrFunction]
+        const bValue = bAny[attributeOrFunction]
 
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           return aValue.localeCompare(bValue)
@@ -286,7 +288,9 @@ export default class BaseCollection<T = any> extends Array<T> {
       // Find by attribute value
       findFn = (item: T) => {
         const itemAny = item as any
-        return typeof itemAny === 'object' && itemAny[attributeOrFunction] === value
+        return (
+          typeof itemAny === 'object' && itemAny[attributeOrFunction] === value
+        )
       }
     } else {
       // Use provided find function
@@ -297,7 +301,7 @@ export default class BaseCollection<T = any> extends Array<T> {
   }
 
   map<U>(callback: (item: T, index: number, array: T[]) => U): U[] {
-    // @ts-ignore
+    // @ts-expect-error The collection is an array
     return Array.prototype.map.call([...this], callback)
   }
 

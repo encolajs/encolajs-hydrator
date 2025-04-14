@@ -44,7 +44,7 @@ export default class BaseModel {
     // Check for a custom setter method
     const setterMethod = `_set_${key}`
     if (typeof (this as any)[setterMethod] === 'function') {
-      (this as any)[setterMethod](value)
+      ;(this as any)[setterMethod](value)
       return this
     }
 
@@ -81,9 +81,7 @@ export default class BaseModel {
     const result: Record<string, any> = {}
 
     // Get all property names, including those from prototype
-    const propNames = new Set([
-      ...Object.keys(this._data || {}),
-    ])
+    const propNames = new Set([...Object.keys(this._data || {})])
 
     // Add each property to result
     propNames.forEach((prop) => {

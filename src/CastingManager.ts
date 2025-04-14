@@ -144,7 +144,7 @@ export default class CastingManager {
     ModelClass: typeof BaseModel,
     CollectionClass?: typeof BaseCollection
   ): this {
-    let castFn = function (value: any) {
+    const castFn = function (value: any) {
       if (value === null || value === undefined) {
         value = {}
       }
@@ -171,7 +171,6 @@ export default class CastingManager {
       if (value instanceof CollectionClass) {
         return value
       }
-
 
       // @ts-expect-error CollectionClass exists
       return new CollectionClass(value, castFn)

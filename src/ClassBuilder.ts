@@ -63,7 +63,6 @@ export default class ClassBuilder {
         }
       }
 
-
       if (spec.type !== 'any' && castingManager.hasSerializer(spec.type)) {
         Class.prototype[`_serialize_${prop}`] = function () {
           return castingManager.serialize(this._data[prop], spec.type)
@@ -167,9 +166,7 @@ export default class ClassBuilder {
       }
     }
 
-    this.withClass(CustomModel)
-        .add('props', props)
-        .add('methods', methods)
+    this.withClass(CustomModel).add('props', props).add('methods', methods)
 
     Object.entries(mixins).forEach(([name, options]) => {
       this.add(name, options)
@@ -183,8 +180,6 @@ export default class ClassBuilder {
     mixins: Record<string, any> = {},
     methods: Record<string, Function> = {}
   ): typeof BaseCollection {
-    const castingManager = this.castingManager
-
     // Create item casting function
     const castItem = (item: any): T => {
       if (item instanceof ModelClass) {

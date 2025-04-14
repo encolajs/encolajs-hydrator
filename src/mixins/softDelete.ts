@@ -1,7 +1,7 @@
 import { PropertySchema } from '../ClassBuilder'
 
 export default function (Class: any, options: any = {}) {
-  let deletedAtField: string = options?.deletedAtField || 'deleted_at'
+  const deletedAtField: string = options?.deletedAtField || 'deleted_at'
 
   const props: Record<string, PropertySchema | string> = {}
   props[deletedAtField] = 'date'
