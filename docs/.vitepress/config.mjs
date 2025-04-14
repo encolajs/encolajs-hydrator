@@ -13,7 +13,7 @@ export default defineConfig({
       {
         text: 'Guide',
         items: [
-          { text: 'Installation', link: '/guide/' },
+          { text: 'Introduction', link: '/guide/' },
           { text: 'Casting Manager', link: '/guide/casting-manager' },
           { text: 'Class builder', link: '/guide/class-builder' },
           { text: 'Base model class', link: '/guide/base-model' },
