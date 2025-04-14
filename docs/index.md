@@ -8,7 +8,7 @@ titleTemplate: Coerce values into types
 hero:
   name: EncolaJS Hydrator
   text: Powerful & Flexible Javascript Hydrator 
-  tagline: A data transformation library that makes type casting, object hydration, and collesctions management a breeze!
+  tagline: A data transformation library that makes type casting, object hydration, and collections management a breeze!
   image:
     src: /encolajs-hydrator.png
     alt: EncolaJS Hydrator code
@@ -19,19 +19,23 @@ hero:
       link: /guide/
 
     - theme: alt
+      text: API Reference
+      link: /api/
+
+    - theme: alt
       text: View on GitHub
       link: https://github.com/encolajs/encolajs-Hydrator
 
 features:
   - icon: ✨
     title: Seamless Type Casting
-    details: Convert values between types. From string to a date object, from an POJO to a smart object
+    details: Convert values between types automatically. From strings to numbers, dates, or custom objects - with consistent handling of edge cases.
   - icon: 🌳
     title: Smart Objects and Collections
-    details: Ditch POJOs and Arrays in favour of smart self-healing models and powerful collections
+    details: Create rich data models with automatic type conversion, validation, and business logic. Work with collections featuring powerful querying and transformation capabilities.
   - icon: 🏗️
     title: Extensible Architecture
-    details: Create custom casters and mixins to augment your app's models
+    details: Easily create custom casters, add mixins to models, and extend the library to fit your specific needs. Designed with flexibility in mind.
 ---
 
 <p style="text-align: center">

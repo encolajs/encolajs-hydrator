@@ -1,21 +1,14 @@
+# Getting Started
+
 EncolaJS Hydrator is a lightweight JavaScript library that provides powerful type casting, object hydration, and serialization capabilities. It bridges the gap between plain JavaScript objects and complex class instances, making it ideal for working with API responses, form data, or any scenario where you need to transform data between formats.
 
-## Core Features
 
-- **Type Casting**: Convert values to specific types with built-in or custom casters
-- **Object Hydration**: Transform plain objects into typed class instances
-- **Serialization**: Convert complex objects back to plain JSON
-- **Model Building**: Create model classes with built-in functionality
-- **Collection Management**: Work with arrays of model instances through a powerful API
+## When to Use EncolaJS Hydrator
 
-## Library Components
-
-The library consists of four main components that can be used independently or together:
-
-1. [**CastingManager**](./casting-manager.md): The foundation of the library that handles type conversion
-2. [**ClassBuilder**](./class-builder.md): Creates and enhances classes with properties, methods, and mixins
-3. [**BaseModel**](./base-model.md): A base class for creating data models with built-in functionality
-4. [**BaseCollection**](./base-collection.md): An enhanced array class for working with collections of models
+- **API Integration**: Convert API responses into strongly-typed model instances
+- **Form Handling**: Ensure form inputs are properly cast to appropriate types
+- **Data Manipulation**: Work with collections of similar objects with a fluent API
+- **Framework-Agnostic**: Use in any JavaScript project, with or without a framework
 
 ## Installation
 
@@ -33,15 +26,13 @@ pnpm add @encolajs/hydrator
 ```
 :::
 
-## Basic Usage
+## Quick Example
 
 ```javascript
-import { CastingManager, ClassBuilder, BaseModel, BaseCollection } from '@encola/hydrator';
+import { CastingManager, ClassBuilder } from '@encola/hydrator';
 
-// Create a casting manager
+// Setup the core components
 const castingManager = new CastingManager();
-
-// Create a builder
 const builder = new ClassBuilder(castingManager);
 
 // Create a model class
@@ -50,30 +41,37 @@ const User = builder.newModelClass({
   age: 'number',
   email: 'string',
   createdAt: 'date'
-}, {
-  // Add mixins
-  timestamps: {} 
-}, {
-  // Add methods
-  isAdult() {
-    return this.age >= 18;
-  }
 });
 
 // Create a model instance
 const user = new User({
   name: 'John Doe',
   age: '30', // Will be cast to number
-  email: 'john@example.com'
+  email: 'john@example.com',
+  createdAt: '2023-01-15'
 });
 
-console.log(user.isAdult()); // true
-console.log(user.created_at); // Current date
+console.log(user.name); // "John Doe"
+console.log(user.age); // 30 (number, not string)
+console.log(user.createdAt); // Date object
 ```
 
-## When to Use EncolaJS Hydrator
+## Learning Path
 
-- **API Integration**: Convert API responses into strongly-typed model instances
-- **Form Handling**: Ensure form inputs are properly cast to appropriate types
-- **Data Manipulation**: Work with collections of similar objects with a fluent API
-- **Framework-Agnostic**: Use in any JavaScript project, with or without a framework
+We recommend exploring EncolaJS Hydrator in this order:
+
+1. **[Type Casting Basics](./type-casting/index.md)**: Understanding the core of data transformation
+   - [CastingManager](./type-casting/casting-manager.md): The foundation of type conversion
+   - [Built-in Casters](./type-casting/built-in-casters.md): Ready-to-use data converters
+   - [Custom Casters](./type-casting/custom-casters.md): Creating your own type converters
+
+2. **[Working with Models](./models/index.md)**: Structuring your data
+   - [BaseModel](./models/base-model.md): Creating rich data models
+   - [Best practices](./models/best-practices.md): Advice on how to handle special use-cases
+
+3. **[Collections](./collections/index.md)**: Managing groups of models
+   - [BaseCollection](./collections/base-collection.md): Working with arrays of models
+
+4. **Advanced Topics**: Taking it further
+   - [ClassBuilder](./advanced/class-builder.md): Factory for creating model and collection classes
+   - [Mixins](./advanced/mixins.md): Extending functionality with composable pieces

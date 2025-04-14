@@ -7,20 +7,66 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/guide/' }
+      { text: 'Guide', link: '/guide/' },
+      { text: 'API', link: '/api/' }
     ],
-    sidebar: [
-      {
-        text: 'Guide',
-        items: [
-          { text: 'Introduction', link: '/guide/' },
-          { text: 'Casting Manager', link: '/guide/casting-manager' },
-          { text: 'Class builder', link: '/guide/class-builder' },
-          { text: 'Base model class', link: '/guide/base-model' },
-          { text: 'Base collection class' , link: '/guide/base-collection'},
-        ]
-      }
-    ],
+    sidebar: {
+      '/guide/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Introduction', link: '/guide/' }
+          ]
+        },
+        {
+          text: 'Type Casting',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/guide/type-casting/' },
+            { text: 'CastingManager', link: '/guide/type-casting/casting-manager' },
+            { text: 'Built-in Casters', link: '/guide/type-casting/built-in-casters' },
+            { text: 'Custom Casters', link: '/guide/type-casting/custom-casters' }
+          ]
+        },
+        {
+          text: 'Models',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/guide/models/' },
+            { text: 'BaseModel', link: '/guide/models/base-model' },
+            { text: 'Best practices', link: '/guide/models/best-practices' }
+          ]
+        },
+        {
+          text: 'Collections',
+          collapsed: false,
+          items: [
+            { text: 'Overview', link: '/guide/collections/' },
+            { text: 'BaseCollection', link: '/guide/collections/base-collection' },
+          ]
+        },
+        {
+          text: 'Advanced',
+          collapsed: false,
+          items: [
+            { text: 'ClassBuilder', link: '/guide/advanced/class-builder' },
+            { text: 'Mixins', link: '/guide/advanced/mixins' },
+          ]
+        }
+      ],
+      '/api/': [
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Overview', link: '/api/' },
+            { text: 'CastingManager', link: '/api/casting-manager' },
+            { text: 'BaseModel', link: '/api/base-model' },
+            { text: 'BaseCollection', link: '/api/base-collection' },
+            { text: 'ClassBuilder', link: '/api/class-builder' }
+          ]
+        }
+      ]
+    },
     footer: {
       message: 'MIT Licensed',
       copyright:

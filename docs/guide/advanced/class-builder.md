@@ -91,132 +91,6 @@ builder
 
 > Important! The `props` feature works in a specific way and it might not work with any class. It is best suited for classes that extend `BaseModel`.
 
-## Built-in Mixins
-
-> Note! The built-in mixins are designed to work with classes that extend `BaseModel` and might not work with your own classes.
-
-The `ClassBuilder` comes with several built-in mixins:
-
-### Timestamps Mixin
-
-Adds `created_at` and `updated_at` fields with automatic maintenance:
-
-```javascript
-const TimestampedTask = builder
-  .withClass(Task)
-  .add('props', {
-    title: 'string',
-    completed: 'boolean'
-  })
-  .add('timestamps')
-  .build();
-
-const task = new TimestampedTask({ title: 'Learn EncolaJS' });
-console.log(task.created_at); // Current date/time
-console.log(task.updated_at); // Same as created_at
-
-// Later, update the task
-task.touch(); // Updates the updated_at timestamp
-```
-
-### SoftDelete Mixin
-
-Adds soft deletion capabilities with `deleted_at` tracking:
-
-```javascript
-const SoftDeletablePost = builder
-  .withClass(Post)
-  .add('props', {
-    title: 'string',
-    content: 'string'
-  })
-  .add('timestamps')
-  .add('softDelete')
-  .build();
-
-const post = new SoftDeletablePost({ title: 'Hello World' });
-
-// Soft delete the post
-post.delete();
-console.log(post.isDeleted()); // true
-console.log(post.deleted_at); // Current date/time
-
-// Restore the post
-post.restore();
-console.log(post.isDeleted()); // false
-console.log(post.deleted_at); // null
-```
-
-### Methods Mixin
-
-A simple way to add methods to a class:
-
-```javascript
-builder
-  .withClass(Calculator)
-  .add('methods', {
-    add(a, b) {
-      return a + b;
-    },
-    subtract(a, b) {
-      return a - b;
-    }
-  })
-  .build();
-```
-
-## Custom Mixins
-
-You can create and register your own mixins:
-
-```javascript
-// Register a custom sluggable mixin
-builder.registerMixin('sluggable', function(Class, options = {}) {
-  const sourceField = options.sourceField || 'title';
-  const targetField = options.targetField || 'slug';
-  
-  // Add the slug property
-  const props = {};
-  props[targetField] = 'string';
-  this.add('props', props);
-  
-  // Add generateSlug method
-  this.add('methods', {
-    generateSlug() {
-      const source = this[sourceField] || '';
-      this[targetField] = source
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      return this;
-    }
-  });
-  
-  // Automatically generate slug when source field changes
-  const originalFill = Class.prototype.fill;
-  Class.prototype.fill = function(data) {
-    const result = originalFill.call(this, data);
-    if (this[sourceField] && !data[targetField]) {
-      this.generateSlug();
-    }
-    return result;
-  };
-});
-
-// Use the mixin
-const SluggablePost = builder
-  .withClass(Post)
-  .add('props', {
-    title: 'string',
-    content: 'string'
-  })
-  .add('sluggable', { sourceField: 'title' })
-  .build();
-
-const post = new SluggablePost({ title: 'Hello World!' });
-console.log(post.slug); // "hello-world"
-```
-
 ## Advanced Property Types
 
 The `add('props', {...})` method supports advanced property definitions:
@@ -255,11 +129,7 @@ builder
   .build();
 ```
 
-## Model and Collection Class Creation
-
-The ClassBuilder provides convenient methods for creating model and collection classes.
-
-### Creating Model Classes
+## Creating Model Classes
 
 The `newModelClass` method creates a model class with properties, mixins, and methods:
 
@@ -298,7 +168,7 @@ console.log(user.isAdult()); // true
 console.log(user.created_at instanceof Date); // true
 ```
 
-### Creating Collection Classes
+## Creating Collection Classes
 
 The `newCollectionClass` method creates a collection class for a specific model:
 
@@ -336,64 +206,12 @@ console.log(products.getTotalPrice()); // 2350
 console.log(products.filterByCategory('electronics').length); // 2
 ```
 
-## API Reference
-
-### Constructor
-
-```javascript
-const builder = new ClassBuilder(castingManager);
-```
-
-Creates a new class builder with the provided casting manager.
-
-### Methods
-
-#### `withClass(Class)`
-
-Sets the class to enhance.
-
-- `Class`: The class to enhance
-
-#### `add(mixinName, options)`
-
-Adds a mixin to the current class.
-
-- `mixinName`: Name of the mixin ('props', 'methods', 'timestamps', etc.)
-- `options`: Options for the mixin
-
-#### `build()`
-
-Finalizes and returns the enhanced class.
-
-#### `registerMixin(name, fn)`
-
-Registers a custom mixin.
-
-- `name`: Name of the mixin
-- `fn`: Mixin implementation function
-
-#### `newModelClass(props, mixins, methods)`
-
-Creates a new model class extending [BaseModel](base-model.md).
-
-- `props`: Property definitions
-- `mixins`: Mixin configurations
-- `methods`: Method definitions
-
-#### `newCollectionClass(ModelClass, mixins, methods)`
-
-Creates a new collection class for the specified model and extends [BaseCollection](base-collection.md).
-
-- `ModelClass`: The model class
-- `mixins`: Mixin configurations
-- `methods`: Method definitions
-
 ## Model Creation vs. Class Enhancement
 
 The `ClassBuilder` provides two approaches to creating enhanced classes:
 
-1. **Class Enhancement**: Enhance an existing class using `withClass().add().build()`
-2. **Model Creation**: Create a new model class using `newModelClass()`
+1. **Model Creation**: Create a new model class using `newModelClass()` which extend the `BaseModel` class
+2**Class Enhancement**: Enhance any existing class using `withClass().add().build()`
 
 The class enhancement approach gives you more control and works with any class, while the model creation approach is more concise but requires extending from `BaseModel`.
 
@@ -407,8 +225,6 @@ The class enhancement approach gives you more control and works with any class, 
 ## TypeScript and JSDoc Support
 
 When working with ClassBuilder in TypeScript or using JSDoc annotations, you'll want to properly type your dynamically created classes. Since the properties are added at runtime, you might need to define interfaces to represent them:
-
-
 
 ```typescript
 interface User {
