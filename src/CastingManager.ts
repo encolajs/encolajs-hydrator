@@ -163,13 +163,17 @@ export default class CastingManager {
 
     this.register(`${type}Collection`, function (value) {
       if (value === null || value === undefined) {
+        // @ts-expect-error CollectionClass exists
         return new CollectionClass([], castFn)
       }
 
+      // @ts-expect-error CollectionClass exists
       if (value instanceof CollectionClass) {
         return value
       }
 
+
+      // @ts-expect-error CollectionClass exists
       return new CollectionClass(value, castFn)
     })
 
