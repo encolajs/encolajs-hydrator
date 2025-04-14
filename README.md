@@ -93,11 +93,7 @@ const grouped = products.groupBy('category');
 
 ## Documentation
 
-- [Overview](./docs/index.md) - Introduction and core concepts
-- [CastingManager](./docs/casting-manager.md) - Type conversion system
-- [ClassBuilder](./docs/class-builder.md) - Create enhanced classes
-- [BaseModel](./docs/base-model.md) - Foundation for model classes
-- [BaseCollection](./docs/base-collection.md) - Enhanced array for collections
+[www.encolajs.com/hydrator/](https://www.encolajs.com/hydrator/)
 
 ## Contributing
 
