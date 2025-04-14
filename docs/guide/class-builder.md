@@ -374,7 +374,7 @@ Registers a custom mixin.
 
 #### `newModelClass(props, mixins, methods)`
 
-Creates a new model class extending [BaseModel](./base-model.md).
+Creates a new model class extending [BaseModel](base-model.md).
 
 - `props`: Property definitions
 - `mixins`: Mixin configurations

@@ -5,3 +5,4 @@ package-lock.json
 tmp/coverage/*
 coverage
 temp
+docs/.vitepress/cache/

@@ -126,7 +126,7 @@ Registers a new caster function for the specified type.
 
 #### `registerModel(type, ModelClass, CollectionClass?)`
 
-Registers a model class for casting and (optionally) a collection class. More on this on the [BaseModel](./base-model.md) and [BaseCollection](./base-collection.md) documentation.
+Registers a model class for casting and (optionally) a collection class. More on this on the [BaseModel](base-model.md) and [BaseCollection](base-collection.md) documentation.
 
 - `type` (string): The type name
 - `ModelClass` (class): The model class (typically extends BaseModel)

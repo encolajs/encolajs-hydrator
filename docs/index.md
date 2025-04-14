@@ -1,80 +1,63 @@
-# EncolaJS Hydrator
+---
+layout: home
+sidebar: false
 
-EncolaJS Hydrator is a lightweight JavaScript library that provides powerful type casting, object hydration, and serialization capabilities. It bridges the gap between plain JavaScript objects and complex class instances, making it ideal for working with API responses, form data, or any scenario where you need to transform data between formats.
+title: EncolaJS Hydrator
+titleTemplate: Coerce values into types
 
-## Core Features
+hero:
+  name: EncolaJS Hydrator
+  text: Powerful & Flexible Javascript Hydrator 
+  tagline: A data transformation library that makes type casting, object hydration, and collesctions management a breeze!
+  image:
+    src: /encolajs-hydrator.png
+    alt: EncolaJS Hydrator code
 
-- **Type Casting**: Convert values to specific types with built-in or custom casters
-- **Object Hydration**: Transform plain objects into typed class instances
-- **Serialization**: Convert complex objects back to plain JSON
-- **Model Building**: Create model classes with built-in functionality
-- **Collection Management**: Work with arrays of model instances through a powerful API
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /guide/
 
-## Library Components
+    - theme: alt
+      text: View on GitHub
+      link: https://github.com/encolajs/encolajs-Hydrator
 
-The library consists of four main components that can be used independently or together:
+features:
+  - icon: ✨
+    title: Seamless Type Casting
+    details: Convert values between types. From string to a date object, from an POJO to a smart object
+  - icon: 🌳
+    title: Smart Objects and Collections
+    details: Ditch POJOs and Arrays in favour of smart self-healing models and powerful collections
+  - icon: 🏗️
+    title: Extensible Architecture
+    details: Create custom casters and mixins to augment your app's models
+---
 
-1. [**CastingManager**](./casting-manager.md): The foundation of the library that handles type conversion
-2. [**ClassBuilder**](./class-builder.md): Creates and enhances classes with properties, methods, and mixins
-3. [**BaseModel**](./base-model.md): A base class for creating data models with built-in functionality
-4. [**BaseCollection**](./base-collection.md): An enhanced array class for working with collections of models
+<p style="text-align: center">
+    Header Image <a target="_blank" href="http://www.freepik.com">Designed by Freepik</a>
+</p>
 
-## Installation
-
-```bash
-npm install @encolajs/hydrator
-```
-
-## Getting Started
-
-```javascript
-import { CastingManager, ClassBuilder, BaseModel, BaseCollection } from '@encola/hydrator';
-
-// Create a casting manager
-const castingManager = new CastingManager();
-
-// Create a builder
-const builder = new ClassBuilder(castingManager);
-
-// Create a model class
-const User = builder.newModelClass({
-  name: 'string',
-  age: 'number',
-  email: 'string',
-  createdAt: 'date'
-}, {
-  // Add mixins
-  timestamps: {} 
-}, {
-  // Add methods
-  isAdult() {
-    return this.age >= 18;
-  }
-});
-
-// Create a model instance
-const user = new User({
-  name: 'John Doe',
-  age: '30', // Will be cast to number
-  email: 'john@example.com'
-});
-
-console.log(user.isAdult()); // true
-console.log(user.created_at); // Current date
-```
-
-## When to Use EncolaJS Hydrator
-
-- **API Integration**: Convert API responses into strongly-typed model instances
-- **Form Handling**: Ensure form inputs are properly cast to appropriate types
-- **Data Manipulation**: Work with collections of similar objects with a fluent API
-- **Framework-Agnostic**: Use in any JavaScript project, with or without a framework
-
-## Advanced Usage
-
-For more advanced usage, explore each component's documentation:
-
-- [CastingManager](./casting-manager.md)
-- [ClassBuilder](./class-builder.md)
-- [BaseModel](./base-model.md)
-- [BaseCollection](./base-collection.md)
+<style>
+.VPHero .image {
+  max-width: 100%;
+}
+.VPHero .image-container {
+  max-width: 100% !important;
+  transform: none;
+  padding: 0;
+  margin: 0;
+}
+.VPHero .image-bg {
+  display: none;
+}
+.VPHero .image-src {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none;
+  top: 0;
+  left: 0;
+  position: relative;
+  transform: none;
+}
+</style>
