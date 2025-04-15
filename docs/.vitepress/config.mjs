@@ -8,6 +8,12 @@ export default defineConfig({
     search: {
       provider: 'local'
     },
+    editLink: {
+      pattern: 'https://github.com/encolajs/encolajs-hydrator/tree/main/docs/:path'
+    },
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/encolajs/encolajs-hydrator' },
+    ],
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/' },
