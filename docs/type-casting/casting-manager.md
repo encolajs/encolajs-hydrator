@@ -56,4 +56,4 @@ const usersArray = [{ name: 'John' }, { name: 'Jane' }];
 const users = castingManager.cast(usersArray, 'userCollection'); // UserCollection instance
 ```
 
-For complete API details, see the [CastingManager API Reference](../../api/casting-manager.md). 
+For complete API details, see the [CastingManager API Reference](../api/casting-manager.md). 

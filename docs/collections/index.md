@@ -69,4 +69,4 @@ const totalAge = users.sum('age');
 const averageAge = users.avg('age');
 ```
 
-For the complete API details, see the [BaseCollection API Reference](../../api/base-collection.md). 
+For the complete API details, see the [BaseCollection API Reference](../api/base-collection.md). 

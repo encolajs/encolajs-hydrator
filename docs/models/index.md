@@ -56,4 +56,4 @@ EncolaJS Hydrator models offer several powerful features:
 - **Events**: React to changes in your models
 - **Serialization**: Convert models to plain objects for APIs
 
-- For the complete API details, see the [BaseModel API Reference](../../api/base-model.md). 
+- For the complete API details, see the [BaseModel API Reference](../api/base-model.md). 

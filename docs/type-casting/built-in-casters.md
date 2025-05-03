@@ -94,4 +94,4 @@ castingManager.cast(["true", "false"], "array:boolean");    // [true, false]
 castingManager.cast([1234567890, 987654321], "array:date"); // [Date, Date]
 ```
 
-For complete details on all built-in casters, see the [API Reference](../../api/casting-manager.md). 
+For complete details on all built-in casters, see the [API Reference](../api/casting-manager.md). 

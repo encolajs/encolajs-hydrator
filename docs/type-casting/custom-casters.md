@@ -108,4 +108,4 @@ const serialized = castingManager.serialize(coord1, 'coordinate');
 4. **Keep casters pure**: Avoid side effects in casting functions.
 5. **Document the expected formats**: Make it clear what formats your caster accepts and produces.
 
-For more details on the API, see the [CastingManager API Reference](../../api/casting-manager.md). 
+For more details on the API, see the [CastingManager API Reference](../api/casting-manager.md). 
