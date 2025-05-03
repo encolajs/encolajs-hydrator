@@ -16,7 +16,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /guide/
+      link: /introduction.md
 
     - theme: alt
       text: API Reference

@@ -4,6 +4,7 @@ export default defineConfig({
   title: "EncolaJS Hydrator",
   description: "Documentation for EncolaJS Hydrator",
   base: "/hydrator/",
+  head: [['link', { rel: 'icon', href: '/hydrator/favicon.ico' }]],
   themeConfig: {
     search: {
       provider: 'local'
@@ -11,55 +12,56 @@ export default defineConfig({
     editLink: {
       pattern: 'https://github.com/encolajs/encolajs-hydrator/tree/main/docs/:path'
     },
+    logo: '/logo.png',
     socialLinks: [
       { icon: 'github', link: 'https://github.com/encolajs/encolajs-hydrator' },
     ],
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/guide/' },
+      { text: 'Guide', link: '/introduction.md' },
       { text: 'API', link: '/api/' }
     ],
     sidebar: {
-      '/guide/': [
+      '/': [
         {
           text: 'Getting Started',
           items: [
-            { text: 'Introduction', link: '/guide/' }
+            { text: 'Introduction', link: '/introduction' }
           ]
         },
         {
           text: 'Type Casting',
           collapsed: false,
           items: [
-            { text: 'Overview', link: '/guide/type-casting/' },
-            { text: 'CastingManager', link: '/guide/type-casting/casting-manager' },
-            { text: 'Built-in Casters', link: '/guide/type-casting/built-in-casters' },
-            { text: 'Custom Casters', link: '/guide/type-casting/custom-casters' }
+            { text: 'Overview', link: '/type-casting/' },
+            { text: 'CastingManager', link: '/type-casting/casting-manager' },
+            { text: 'Built-in Casters', link: '/type-casting/built-in-casters' },
+            { text: 'Custom Casters', link: '/type-casting/custom-casters' }
           ]
         },
         {
           text: 'Models',
           collapsed: false,
           items: [
-            { text: 'Overview', link: '/guide/models/' },
-            { text: 'BaseModel', link: '/guide/models/base-model' },
-            { text: 'Best practices', link: '/guide/models/best-practices' }
+            { text: 'Overview', link: '/models/' },
+            { text: 'BaseModel', link: '/models/base-model' },
+            { text: 'Best practices', link: '/models/best-practices' }
           ]
         },
         {
           text: 'Collections',
           collapsed: false,
           items: [
-            { text: 'Overview', link: '/guide/collections/' },
-            { text: 'BaseCollection', link: '/guide/collections/base-collection' },
+            { text: 'Overview', link: '/collections/' },
+            { text: 'BaseCollection', link: '/collections/base-collection' },
           ]
         },
         {
           text: 'Advanced',
           collapsed: false,
           items: [
-            { text: 'ClassBuilder', link: '/guide/advanced/class-builder' },
-            { text: 'Mixins', link: '/guide/advanced/mixins' },
+            { text: 'ClassBuilder', link: '/advanced/class-builder' },
+            { text: 'Mixins', link: '/advanced/mixins' },
           ]
         }
       ],

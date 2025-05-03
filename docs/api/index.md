@@ -16,4 +16,4 @@ Each page in this section provides comprehensive API details including:
 - Properties and their types
 - Return values and examples
 
-For conceptual guides and learning materials, please see the [Guide](../guide/) section. 
+For conceptual guides and learning materials, please see the [Guide](../) section. 

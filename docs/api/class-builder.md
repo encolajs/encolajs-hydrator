@@ -36,7 +36,7 @@ Registers a custom mixin.
 
 #### `newModelClass(props, mixins, methods)`
 
-Creates a new model class extending [BaseModel](/guide/models/base-model.md).
+Creates a new model class extending [BaseModel](/models/base-model.md).
 
 - `props`: Property definitions
 - `mixins`: Mixin configurations
@@ -44,7 +44,7 @@ Creates a new model class extending [BaseModel](/guide/models/base-model.md).
 
 #### `newCollectionClass(ModelClass, mixins, methods)`
 
-Creates a new collection class for the specified model and extends [BaseCollection](/guide/collections/base-collection.md).
+Creates a new collection class for the specified model and extends [BaseCollection](/collections/base-collection.md).
 
 - `ModelClass`: The model class
 - `mixins`: Mixin configurations
