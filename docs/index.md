@@ -17,11 +17,7 @@ hero:
     - theme: brand
       text: Get Started
       link: /introduction.md
-
-    - theme: alt
-      text: API Reference
-      link: /api/
-
+      
     - theme: alt
       text: View on GitHub
       link: https://github.com/encolajs/encolajs-Hydrator

@@ -18,8 +18,14 @@ export default defineConfig({
     ],
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/introduction.md' },
-      { text: 'API', link: '/api/' }
+      { text: 'Documentation', link: '/introduction.md' },
+      { text: 'API', link: '/api/' },
+      { text: 'More...',
+        items: [
+          {text: 'EncolaJS Enforma', link: 'https://encolajs.com/enforma/'},
+          {text: 'EncolaJS Validator', link: 'https://encolajs.com/validator/'},
+        ]
+      },
     ],
     sidebar: {
       '/': [
