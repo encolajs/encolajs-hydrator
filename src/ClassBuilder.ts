@@ -59,13 +59,17 @@ export default class ClassBuilder {
 
       if (spec.type !== 'any') {
         Class.prototype[`_cast_${prop}`] = function (value: any) {
-          return castingManager.hasCaster(spec.type) ? castingManager.cast(value, spec.type) : value
+          return castingManager.hasCaster(spec.type)
+            ? castingManager.cast(value, spec.type)
+            : value
         }
       }
 
       if (spec.type !== 'any') {
         Class.prototype[`_serialize_${prop}`] = function () {
-          return castingManager.hasSerializer(spec.type) ? castingManager.serialize(this._data[prop], spec.type) : this._data[prop]
+          return castingManager.hasSerializer(spec.type)
+            ? castingManager.serialize(this._data[prop], spec.type)
+            : this._data[prop]
         }
       }
 

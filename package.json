@@ -1,6 +1,6 @@
 {
     "name": "@encolajs/hydrator",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A JavaScript/TypeScript library for schema-driven object hydration that transforms plain objects into rich domain models with composable behavior",
     "type": "module",
     "main": "dist/index.js",
