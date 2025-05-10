@@ -4,7 +4,21 @@ export default defineConfig({
   title: "EncolaJS Hydrator",
   description: "Documentation for EncolaJS Hydrator",
   base: "/hydrator/",
-  head: [['link', { rel: 'icon', href: '/hydrator/favicon.ico' }]],
+  head: [
+    ['link', { rel: 'icon', href: '/hydrator/favicon.ico' }],
+    [
+      'script',
+      {
+        async: true,
+        src: 'https://www.googletagmanager.com/gtag/js?id=G-4CP1E3Z3Q0',
+      },
+    ],
+    [
+      'script',
+      {},
+      "window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);};gtag('js', new Date());gtag('config', 'G-4CP1E3Z3Q0');",
+    ],
+  ],
   themeConfig: {
     search: {
       provider: 'local'

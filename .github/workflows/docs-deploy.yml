@@ -36,4 +36,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./docs/.vitepress/dist/
-          server-dir: /hydrator/
+          server-dir: /public/hydrator/
