@@ -3,7 +3,7 @@
 🚀 A powerful, flexible data transformation library that makes type casting, object hydration, and collections management a breeze! Built with TypeScript and designed with developer experience in mind.
 
 ![CI](https://github.com/encolajs/encolajs-hydrator/workflows/CI/badge.svg)
-[![npm version](https://img.shields.io/npm/v/@encola/hydrator.svg)](https://www.npmjs.com/package/@encola/hydrator)
+[![npm version](https://badge.fury.io/js/@encolajs%2Fhydrator.svg)](https://www.npmjs.com/package/@encola/hydrator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Why EncolaJS Hydrator?
