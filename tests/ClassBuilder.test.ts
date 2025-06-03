@@ -40,6 +40,7 @@ describe('ClassBuilder', () => {
       expect(person.name).toBe('John Doe')
       expect(person.age).toBe(42)
       expect(person.email).toBe('john@example.com')
+      expect(person.missing_prop).toBeUndefined()
     })
 
     it('adds methods to a class', () => {
