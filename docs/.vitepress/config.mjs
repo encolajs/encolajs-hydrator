@@ -56,7 +56,8 @@ export default defineConfig({
             { text: 'Overview', link: '/type-casting/' },
             { text: 'CastingManager', link: '/type-casting/casting-manager' },
             { text: 'Built-in Casters', link: '/type-casting/built-in-casters' },
-            { text: 'Custom Casters', link: '/type-casting/custom-casters' }
+            { text: 'Custom Casters', link: '/type-casting/custom-casters' },
+            { text: 'Typescript Support', link: '/typescript' }
           ]
         },
         {

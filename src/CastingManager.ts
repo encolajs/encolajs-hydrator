@@ -179,7 +179,7 @@ export default class CastingManager {
     return this
   }
 
-  cast(value: any, typeSpec: string): any {
+  cast<T = any>(value: any, typeSpec: string): T {
     const [type, ...params] = typeSpec.split(':')
     const castFn = this.casters.get(type.toLowerCase())
 
