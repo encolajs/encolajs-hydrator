@@ -368,6 +368,21 @@ export default class BaseCollection<T = any> extends Array<T> {
     })
   }
 
+  slice(start?: number, end?: number): BaseCollection<T> {
+    const slicedItems = Array.prototype.slice.call(this, start, end)
+    return this._newInstance(slicedItems)
+  }
+
+  splice(start: number, deleteCount?: number, ...items: any[]): T[] {
+    if (items.length) {
+      const castedItems = items.map((item) => this._castItem(item))
+      return super.splice(start, deleteCount || 0, ...castedItems)
+    }
+    return deleteCount === undefined
+      ? super.splice(start)
+      : super.splice(start, deleteCount)
+  }
+
   clone(): BaseCollection<T> {
     const clonedItems = Array.prototype.map.call([...this], (item: any) => {
       if (

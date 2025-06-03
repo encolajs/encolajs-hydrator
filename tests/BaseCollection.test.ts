@@ -857,6 +857,98 @@ describe('BaseCollection', () => {
     })
   })
 
+  describe('slice and splice methods', () => {
+    it('should return a new BaseCollection instance from slice', () => {
+      const sliced = collection.slice(1, 3)
+
+      expect(sliced).toBeInstanceOf(TestCollection)
+      expect(sliced).not.toBe(collection)
+      expect(sliced.length).toBe(2)
+      expect(sliced[0].id).toBe(2) // Item B
+      expect(sliced[1].id).toBe(3) // Item C
+    })
+
+    it('should handle slice with no arguments', () => {
+      const sliced = collection.slice()
+
+      expect(sliced).toBeInstanceOf(TestCollection)
+      expect(sliced.length).toBe(collection.length)
+      expect(sliced).not.toBe(collection)
+    })
+
+    it('should handle slice with only start parameter', () => {
+      const sliced = collection.slice(2)
+
+      expect(sliced).toBeInstanceOf(TestCollection)
+      expect(sliced.length).toBe(2)
+      expect(sliced[0].id).toBe(3) // Item C
+      expect(sliced[1].id).toBe(4) // Item D
+    })
+
+    it('should handle slice with negative indices', () => {
+      const sliced = collection.slice(-2)
+
+      expect(sliced).toBeInstanceOf(TestCollection)
+      expect(sliced.length).toBe(2)
+      expect(sliced[0].id).toBe(3) // Item C
+      expect(sliced[1].id).toBe(4) // Item D
+    })
+
+    it('should cast new items in splice method', () => {
+      const removedItems = collection.splice(1, 1, {
+        id: 5,
+        name: 'Item E',
+        price: 100,
+        category: 'books',
+        active: true,
+      })
+
+      expect(removedItems.length).toBe(1)
+      expect(removedItems[0].id).toBe(2) // Item B was removed
+      expect(collection.length).toBe(4) // Still 4 items
+      expect(collection[1]).toBeInstanceOf(TestModel) // New item is cast
+      expect(collection[1].id).toBe(5)
+      expect(collection[1].name).toBe('Item E')
+    })
+
+    it('should handle splice with multiple new items', () => {
+      const removedItems = collection.splice(
+        2,
+        1,
+        { id: 5, name: 'Item E', price: 100 },
+        { id: 6, name: 'Item F', price: 150 }
+      )
+
+      expect(removedItems.length).toBe(1)
+      expect(removedItems[0].id).toBe(3) // Item C was removed
+      expect(collection.length).toBe(5) // 4 - 1 + 2 = 5 items
+      expect(collection[2]).toBeInstanceOf(TestModel)
+      expect(collection[3]).toBeInstanceOf(TestModel)
+      expect(collection[2].id).toBe(5)
+      expect(collection[3].id).toBe(6)
+    })
+
+    it('should handle splice with only removal', () => {
+      const removedItems = collection.splice(1, 2)
+
+      expect(removedItems.length).toBe(2)
+      expect(removedItems[0].id).toBe(2) // Item B
+      expect(removedItems[1].id).toBe(3) // Item C
+      expect(collection.length).toBe(2) // Only 2 items left
+      expect(collection[0].id).toBe(1) // Item A
+      expect(collection[1].id).toBe(4) // Item D
+    })
+
+    it('should handle splice with no deleteCount', () => {
+      const removedItems = collection.splice(2)
+
+      expect(removedItems.length).toBe(2) // Items C and D removed
+      expect(collection.length).toBe(2) // Only Items A and B left
+      expect(collection[0].id).toBe(1)
+      expect(collection[1].id).toBe(2)
+    })
+  })
+
   describe('mixed operations', () => {
     it('should support method chaining', () => {
       // Adding items, filtering, sorting, and taking the head

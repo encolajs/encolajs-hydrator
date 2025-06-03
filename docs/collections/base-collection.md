@@ -183,7 +183,10 @@ const filtered = products.filter(item => item.price > 100);
 const total = products.reduce((sum, item) => sum + item.price, 0);
 const someExpensive = products.some(item => item.price > 1000);
 const allInStock = products.every(item => item.inStock);
-const sliced = products.slice(1, 3);
+
+// Array manipulation methods with proper type casting
+const sliced = products.slice(1, 3); // Returns a new BaseCollection
+const spliced = products.splice(1, 2, newItem1, newItem2); // Casts new items
 ```
 
 
