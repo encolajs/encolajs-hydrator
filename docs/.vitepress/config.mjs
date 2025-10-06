@@ -28,6 +28,7 @@ export default defineConfig({
     },
     logo: '/logo.png',
     socialLinks: [
+      { icon: 'x', link: 'https://x.com/encolajs' },
       { icon: 'github', link: 'https://github.com/encolajs/encolajs-hydrator' },
     ],
     nav: [
@@ -38,6 +39,7 @@ export default defineConfig({
         items: [
           {text: 'EncolaJS Enforma', link: 'https://encolajs.com/enforma/'},
           {text: 'EncolaJS Validator', link: 'https://encolajs.com/validator/'},
+          {text: 'EncolaJS Form Controller', link: 'https://encolajs.com/form-controller/'},
         ]
       },
     ],
